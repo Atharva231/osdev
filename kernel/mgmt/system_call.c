@@ -89,7 +89,7 @@ void system_call_task(){
     	temp=load_elf(syscall_buff[1]);
     	break;
     case 20:
-    	temp=link_load_elf(syscall_buff[1], syscall_buff[2]);
+    	temp=load_link_elf(syscall_buff[1], syscall_buff[2], 0);
     	break;
     case 21:
         temp=link_elf(syscall_buff[1],syscall_buff[2]);

@@ -2,6 +2,7 @@ global read_port
 global write_port
 global print_char
 global jump
+global call_func
 global halt
 global load_idt
 global load_gdt
@@ -56,6 +57,11 @@ print_char:
 
 jump:
     jmp [esp + 4]
+
+call_func:
+    mov eax, [esp + 4]
+    call eax;
+    ret
 
 halt:
     jmp $

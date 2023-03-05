@@ -55,10 +55,10 @@ void filesystem_init(uint32_t addr, uint32_t limit){
                 }
                 file_temp->next=0;
                 dir_temp->files_list=file_temp;
-		for(uint8_t i=0;i<ENTRIES_PER_FILE;i++){
-		    if(file_temp->file_addr[i][1]!=0)
-		       sector_alloc(file_temp->file_addr[i][1]);
-		}
+        		for(uint8_t i=0;i<ENTRIES_PER_FILE;i++){
+        		    if(file_temp->file_addr[i][1]!=0)
+        		       sector_alloc(file_temp->file_addr[i][1]);
+        		}
             }
             else{
                 append_file_node("temp", (uint8_t*)temp_file_addr, dir_temp->files_list);
@@ -70,7 +70,7 @@ void filesystem_init(uint32_t addr, uint32_t limit){
                 for(uint16_t i=0;i<sizeof(struct file_list_element);i++){
                     ptr_buff[i]=buff[ptr+i];
                 }
-		for(uint8_t i=0;i<ENTRIES_PER_FILE;i++){
+                for(uint8_t i=0;i<ENTRIES_PER_FILE;i++){
                     if(file_temp->file_addr[i][1]!=0)
                        sector_alloc(file_temp->file_addr[i][1]);
                 }
