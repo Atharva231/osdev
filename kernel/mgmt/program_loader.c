@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <elf.h>
+#include "process_mgmt.c"
 
 uint32_t perm_parser(uint32_t flag){
     switch(flag){
@@ -309,6 +310,12 @@ uint32_t load_link_elf(uint32_t files, uint32_t reloc_addr, uint32_t file_num){
         }
        }
     }
+    /*src=(uint8_t*)(reloc_addr+c);
+    uint32_t stack_size=0x100000;
+    for(uint32_t i=0;i<stack_size;i++){
+        src[i]=0;
+    }
+    c+=stack_size;*/
     for(uint8_t i=0;i<(reloc_sec->sh_size)/(reloc_sec->sh_entsize);i++){
 	   rel_entry=(Elf32_Rel*)(addr+reloc_sec->sh_offset+(i*8));
        sym_type=rel_entry->r_info&0xFF;

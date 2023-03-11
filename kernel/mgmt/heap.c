@@ -8,37 +8,25 @@ static uint32_t lowest_free_record_fmt;
 //static uint32_t lowest_free_record_mat;
 static uint32_t heap_start_addr;
 
-void heap_init(uint32_t heap_start){
+void heap_init(uint32_t heap_start, uint32_t limit){
     heap_start_addr=heap_start;
     for(uint16_t i=0;i<FMT_SIZE;i++){
         fmt[i][0]=0;
         fmt[i][1]=0;
     }
-/*    for(uint16_t i=0;i<MAT_SIZE;i++){
-        mat[i][0]=0;
-        mat[i][1]=0;
-    }
-    mat[0][0] = 0x00090000;     //stack start
-    mat[0][1] = 0x0009FFFF;     //stack end
-    mat[1][0] = 0x000A0000;     //video memory start
-    mat[1][1] = 0x000BFFFF;     //video memory end*/
     fmt[0][0] = heap_start_addr;
-    fmt[0][1] = 0x8FFFF;
-    fmt[1][0] = 0xC0000;
-    fmt[1][1] = 0xFFFDF;
-    lowest_free_record_fmt = 2;
-    //lowest_free_record_mat = 2;
+    fmt[0][1] = limit;
+    lowest_free_record_fmt = 1;
 }
 
 uint32_t mem_alloc(uint32_t mem_size){
-    uint32_t mem_start=0,t;
+    uint32_t mem_start=0;
     uint16_t i;
     for(i=0;fmt[i][1]<(fmt[i][0]+mem_size-1)&&i<FMT_SIZE;i++){
     }
     if(i<FMT_SIZE){
         mem_start=fmt[i][0];
         fmt[i][0]+=mem_size;
-	t=fmt[i][0];
         if(fmt[i][0]==fmt[i][1]){
             fmt[i][0]=0;
             fmt[i][1]=0;

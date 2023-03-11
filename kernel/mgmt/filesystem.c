@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdbool.h>
-#include "disk_mgmt.c"
 #include "file_list.c"
 
 static uint32_t filesystem_addr;

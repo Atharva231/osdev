@@ -220,31 +220,26 @@ uint8_t keymap_caps(uint8_t t){
 void keyboard_get_print(){
     write_port(0x20, 0x20);
     uint8_t str[] = ".";
-    //char keymap_small[]="`1234567890-=\0\0qwertyuiop[]\0\0asdfghjkl;\'\0\0\\zxcvbnm,./\0\0\0 ";
-    //char keymap_caps[]="~!@#$%^&*()_+\0\0QWERTYUIOP{}\0\0ASDFGHJKL:\"\0\0|ZXCVBNM<>?\0\0\0 ";
     uint32_t t;
     if(read_port(KEYBOARD_STATUS_PORT) & 0x1){
-            t = read_port(KEYBOARD_DATA_PORT);
-			if(t==14){
-				del_char();
-			}
-            if(keymap_small(t)!='\0'){
-                if(prev_key!=54){
-                    //str[0] = keymap_small[t-1];
-                    str[0] = keymap_small(t);
-                }
-                else{
-                    str[0] = keymap_caps(t);
-                }
-		if(print_status)
-                    print_text(str);
-		else{
-		    *key_buff=str[0];
-		    key_buff=(uint8_t*)(key_buff+1);
+        t = read_port(KEYBOARD_DATA_PORT);
+		if(t==14){
+			del_char();
 		}
+        if(keymap_small(t)!='\0'){
+            if(prev_key!=54){
+                str[0] = keymap_small(t);
             }
-            prev_key=t;
+            else{
+                str[0] = keymap_caps(t);
+            }
+    		if(print_status)
+                print_text(str);
+    		else{
+    		    *key_buff=str[0];
+    		    key_buff=(uint8_t*)(key_buff+1);
+    		}
+        }
+        prev_key=t;
     }
-    /*char *p = (char*)0xb8000;
-    *p = 'X';*/
 }

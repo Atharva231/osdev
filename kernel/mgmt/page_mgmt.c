@@ -5,25 +5,24 @@
 static uint32_t fpt[FPT_SIZE][2];
 static uint32_t lowest_free_record_fpt;
 
-void page_alloc_init(){
+void page_alloc_init(uint32_t start){
     for(uint16_t i=0;i<FPT_SIZE;i++){
         fpt[i][0]=0;
         fpt[i][1]=0;
     }
-    fpt[0][0] = 1;
-    fpt[0][1] = 0xFFFFF;
+    fpt[0][0] = start;
+    fpt[0][1] = 0xFFFFFFFF;
     lowest_free_record_fpt = 1;
 }
 
 uint32_t page_alloc(uint32_t mem_size){
-    uint32_t mem_start=0,t;
+    uint32_t mem_start=0;
     uint16_t i;
     for(i=0;fpt[i][1]<(fpt[i][0]+mem_size-1)&&i<FPT_SIZE;i++){
     }
     if(i<FPT_SIZE){
         mem_start=fpt[i][0];
         fpt[i][0]+=mem_size;
-	t=fpt[i][0];
         if(fpt[i][0]==fpt[i][1]){
             fpt[i][0]=0;
             fpt[i][1]=0;

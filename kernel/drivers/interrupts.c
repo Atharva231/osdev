@@ -15,9 +15,8 @@ struct InterruptDescriptor32 {
    	uint8_t  type_attr; // gate type, dpl, and p fields
    	uint16_t offset_higherbits;        // offset bits 16..31
 };
-
+struct InterruptDescriptor32 IDT_entry[IDT_SIZE];
 void idt_init(void){
-   	struct InterruptDescriptor32 IDT_entry[IDT_SIZE];
    	uint32_t keyboard_address, timer_address, system_call_address;
 	uint32_t page_fault_address, general_protec_fault_addr;
 	uint32_t idt_address;

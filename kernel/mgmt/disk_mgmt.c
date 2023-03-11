@@ -2,12 +2,8 @@
 #define FST_SIZE 256
 #include <stdint.h>
 
-/*static uint8_t buffer_sat[SAT_SIZE*4*2];
-static uint8_t buffer_fst[FST_SIZE*4*2];
-static uint32_t (*sat)[2] = (uint32_t(*)[2])buffer_sat;
-static uint32_t (*fst)[2] = (uint32_t(*)[2])buffer_fst;*/
-static uint32_t fst[FST_SIZE][2];//, sat[SAT_SIZE][2];
-static uint32_t lowest_free_record_fst, disk_start_addr;//, lowest_free_record_sat;
+static uint32_t fst[FST_SIZE][2];
+static uint32_t lowest_free_record_fst, disk_start_addr;
 
 uint32_t disk_init(uint32_t addr, uint32_t limit){
     disk_start_addr = addr;
@@ -23,12 +19,6 @@ uint32_t disk_init(uint32_t addr, uint32_t limit){
             break;
         }
     }
-    /*for(uint16_t i=0;i<SAT_SIZE;i++){
-        if(sat[i][0]==0){
-            lowest_free_record_sat = i;
-            break;
-        }
-    }*/
     return addr;
 }
 
@@ -57,11 +47,6 @@ uint32_t sector_alloc(uint32_t sector_count){
                 lowest_free_record_fst=i;
             }
         }
-        /*sat[lowest_free_record_sat][0]=sector_start;
-        sat[lowest_free_record_sat][1]=t-1;
-        while(sat[lowest_free_record_sat][0]!=0){
-            lowest_free_record_sat+=1;
-        }*/
     }
     return sector_start;
 }
@@ -69,9 +54,6 @@ uint32_t sector_alloc(uint32_t sector_count){
 uint32_t free_sector(uint32_t addr, uint32_t num_sectors){
     uint32_t resp=1;
     uint16_t i=0,f=SAT_SIZE,r=SAT_SIZE,j=0;
-    /*while(sat[i][0]!=addr && i<SAT_SIZE){
-        i++;
-    }*/
     while((f==SAT_SIZE || r==SAT_SIZE)&&j<FST_SIZE){
         if(addr==(fst[j][1]+1)){
             f=j;
@@ -105,8 +87,6 @@ uint32_t free_sector(uint32_t addr, uint32_t num_sectors){
         }
         fst[k][0]=addr;
         fst[k][1]=addr+num_sectors-1;
-        //fmt[lowest_free_record_fmt][0]=mat[i][0];
-        //fmt[lowest_free_record_fmt][1]=mat[i][1];
         while(fst[lowest_free_record_fst][0]!=0){
             lowest_free_record_fst+=1;
         }
@@ -135,13 +115,5 @@ uint32_t free_sector(uint32_t addr, uint32_t num_sectors){
             }
         }
     }
-    /*if(i>0){
-        sat[i][0] = 0;
-        sat[i][1] = 0;
-        if(lowest_free_record_sat>i){
-            lowest_free_record_sat = i;
-        }
-        resp=2;
-    }*/
     return fst[0][1];
 }

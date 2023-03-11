@@ -1,3 +1,4 @@
+[bits 32]
 global read_port
 global write_port
 global print_char
@@ -87,15 +88,32 @@ disable_interrupts:
     ret
 
 keyboard_handler:                 
-	call keyboard_get_print
-	iretd
+	pushad
+    cld
+    call keyboard_get_print
+	popad
+    iretd
 
 system_call_handler:
+    pushad
+    cld
     call system_call_task
+    popad
     iretd
     
 timer_handler:
+    pushad
+    cld
     call timer_task
+    popad
+    iretd
+
+page_fault_handler:
+    pushad
+    cld
+    call page_fault_task
+    popad
+    add esp, 4
     iretd
 
 loadPageDirectory:
@@ -117,7 +135,3 @@ read_cr2:
     mov eax, cr2
     ret
 
-page_fault_handler:
-    call page_fault_task
-    add esp, 4
-    iretd
