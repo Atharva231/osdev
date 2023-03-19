@@ -87,16 +87,17 @@ void system_call_task(){
     	break;
     case 19:
     	temp=load_elf(syscall_buff[1]);
+        syscall_buff[1]=alloc_pages(0x100000);
     	break;
     case 20:
-    	temp=load_link_elf(syscall_buff[1], syscall_buff[2], 0);
+        syscall_buff[3]=get_heap_size(syscall_buff[1], 0);
+        syscall_buff[2]=alloc_pages(syscall_buff[3]+0x100000);
+    	temp=load_link_elf(syscall_buff[1], 0, syscall_buff[2]);
+        syscall_buff[1]=(syscall_buff[2]+syscall_buff[3]+0x100000)-1;
     	break;
     case 21:
         temp=link_elf(syscall_buff[1],syscall_buff[2]);
         break;
-    }
-    for(uint8_t i=0;i<SYSCALL_BUFF_LEN;i++){
-    	syscall_buff[i]=0;
     }
     syscall_buff[0]=temp;
 }

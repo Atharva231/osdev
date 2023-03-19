@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <elf.h>
 #include "process_mgmt.c"
-
+static uint32_t reloc_addr;
 uint32_t perm_parser(uint32_t flag){
     switch(flag){
 	case 7:
@@ -16,6 +16,82 @@ uint32_t perm_parser(uint32_t flag){
 	case 1:
 	return 1;
     }
+}
+uint32_t get_heap_size(uint32_t files, uint32_t file_num){
+    uint32_t* file_addr=(uint32_t*)files;
+    uint32_t addr=file_addr[file_num];
+    if(addr==0)
+        return 0;
+    Elf32_Ehdr* elf_hdr=0;
+    Elf32_Shdr* sec_entry=0;
+    Elf32_Shdr* text_sec=0;
+    Elf32_Shdr* data_sec=0;
+    Elf32_Shdr* reloc_sec=0;
+    Elf32_Shdr* symtab_sec=0;
+    Elf32_Shdr* bss_sec=0;
+    Elf32_Shdr* strtab_sec=0;
+    Elf32_Sym* sym_entry=0;
+    Elf32_Rel* rel_entry=0;
+    elf_hdr=(Elf32_Ehdr*)addr;
+    if(elf_hdr->e_ident[1]!='E' || elf_hdr->e_ident[2]!='L' || elf_hdr->e_ident[3]!='F')
+        return 0;
+    else if(elf_hdr->e_type!=1)
+        return 1;
+    uint32_t c=0,sym_type,temp;
+    uint32_t sym_addr;
+    uint8_t* src;
+    uint8_t* dst;
+    uint32_t* src_32;
+    uint8_t delim[]=",";
+    sec_entry=(Elf32_Shdr*)(addr+elf_hdr->e_shoff+(elf_hdr->e_shstrndx*elf_hdr->e_shentsize));
+    uint8_t* shstrtab=(uint8_t*)sec_entry->sh_offset+addr;
+    for(uint8_t i=0;i<elf_hdr->e_shnum;i++){
+        sec_entry=(Elf32_Shdr*)(addr+elf_hdr->e_shoff+(i*elf_hdr->e_shentsize));
+        switch(shstrtab[(uint32_t)sec_entry->sh_name+1]){
+        case 't':
+            text_sec=sec_entry;
+            ++c;
+            break;
+        case 'd':
+            data_sec=sec_entry;
+            ++c;
+            break;
+        case 'r':
+            if(shstrtab[(uint32_t)sec_entry->sh_name+5]=='t'){
+                reloc_sec=sec_entry;
+                ++c;
+            }
+            break;
+        case 's':
+            if(shstrtab[(uint32_t)sec_entry->sh_name+2]=='y'){
+                symtab_sec=sec_entry;
+            }
+            else if(shstrtab[(uint32_t)sec_entry->sh_name+2]=='t'){
+                strtab_sec=sec_entry;
+            }
+            ++c;
+            break;
+        case 'b':
+            bss_sec=sec_entry;
+            ++c;
+            break;
+        }
+    }
+    if(c==0||reloc_sec==0)
+       return 2;
+    c=0;
+    for(uint8_t i=0;i<(reloc_sec->sh_size)/(reloc_sec->sh_entsize);i++){
+       rel_entry=(Elf32_Rel*)(addr+reloc_sec->sh_offset+(i*8));
+       sym_type=rel_entry->r_info&0xFF;
+       sym_addr=(rel_entry->r_info>>8);
+       sym_entry=(Elf32_Sym*)(addr+symtab_sec->sh_offset+sym_addr*sizeof(Elf32_Sym));
+       if(sym_type==0x01){
+        if(sym_entry->st_shndx==0xfff2){
+            c+=sym_entry->st_size;
+        }
+       }
+    }
+    return c+get_heap_size(files, file_num+1);
 }
 uint32_t find_symbol(uint32_t addr, uint8_t* symbol){
     Elf32_Ehdr* elf_hdr;
@@ -192,7 +268,7 @@ uint32_t load_elf(uint32_t addr){
     return prg_entry_addr;
 }
 
-uint32_t load_link_elf(uint32_t files, uint32_t reloc_addr, uint32_t file_num){
+uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
     uint32_t* file_addr=(uint32_t*)files;
     uint32_t addr=file_addr[file_num];
     Elf32_Ehdr* elf_hdr=0;
@@ -273,7 +349,6 @@ uint32_t load_link_elf(uint32_t files, uint32_t reloc_addr, uint32_t file_num){
                         if(src[2]=='i'){
                             if(src[3]=='n'){
                                 f=false;
-                                //prg_entry_addr=reloc_addr+sym_entry->st_value;
                                 prg_entry_addr=addr+text_sec->sh_offset+sym_entry->st_value;
                             }
                         }
@@ -282,16 +357,9 @@ uint32_t load_link_elf(uint32_t files, uint32_t reloc_addr, uint32_t file_num){
             }
         }
     }
-    /*dst=(uint8_t*)reloc_addr;
-    src=(uint8_t*)(addr+text_sec->sh_offset);
-    for(uint32_t i=0;i<text_sec->sh_size;i++){
-        dst[i]=src[i];
+    if(!f){
+        reloc_addr=reloc;
     }
-    dst=(uint8_t*)(reloc_addr+text_sec->sh_size);
-    src=(uint8_t*)(addr+data_sec->sh_offset);
-    for(uint32_t i=0;i<data_sec->sh_size;i++){
-        dst[i]=src[i];
-    }*/
     c=0;
     for(uint8_t i=0;i<(reloc_sec->sh_size)/(reloc_sec->sh_entsize);i++){
        rel_entry=(Elf32_Rel*)(addr+reloc_sec->sh_offset+(i*8));
@@ -300,38 +368,30 @@ uint32_t load_link_elf(uint32_t files, uint32_t reloc_addr, uint32_t file_num){
        sym_entry=(Elf32_Sym*)(addr+symtab_sec->sh_offset+sym_addr*sizeof(Elf32_Sym));
        if(sym_type==0x01){
         if(sym_entry->st_shndx==0xfff2){
-            //src=(uint8_t*)(reloc_addr+text_sec->sh_size+data_sec->sh_size+c);
-            src=(uint8_t*)(reloc_addr+c);
+            /*src=(uint8_t*)(reloc_addr+c);
             for(uint32_t i=0;i<sym_entry->st_size;i++){
                 src[i]=0;
-            }
+            }*/
             sym_entry->st_value=c;
             c+=sym_entry->st_size;
         }
        }
     }
-    /*src=(uint8_t*)(reloc_addr+c);
-    uint32_t stack_size=0x100000;
-    for(uint32_t i=0;i<stack_size;i++){
-        src[i]=0;
-    }
-    c+=stack_size;*/
+    reloc_addr+=c;
     for(uint8_t i=0;i<(reloc_sec->sh_size)/(reloc_sec->sh_entsize);i++){
 	   rel_entry=(Elf32_Rel*)(addr+reloc_sec->sh_offset+(i*8));
        sym_type=rel_entry->r_info&0xFF;
        sym_addr=(rel_entry->r_info>>8);
        sym_entry=(Elf32_Sym*)(addr+symtab_sec->sh_offset+sym_addr*sizeof(Elf32_Sym));
        src_32=(uint32_t*)(addr+text_sec->sh_offset+rel_entry->r_offset);
-       //src_32=(uint32_t*)(reloc_addr+rel_entry->r_offset);
        if(sym_type==0x01){
         if(sym_entry->st_shndx==0xfff2){
             temp=*src_32;
-            *src_32=(reloc_addr+text_sec->sh_size+data_sec->sh_size+sym_entry->st_value)+temp;
+            *src_32=(reloc+text_sec->sh_size+data_sec->sh_size+sym_entry->st_value)+temp;
         }
         else{
             temp=*src_32;
             *src_32=(addr+data_sec->sh_offset+sym_entry->st_value)+temp;
-            //*src_32=(reloc_addr+text_sec->sh_size+sym_entry->st_value)+temp;
         }
        }
        else if(sym_type==0x02){
@@ -343,7 +403,7 @@ uint32_t load_link_elf(uint32_t files, uint32_t reloc_addr, uint32_t file_num){
                 if(flag>3){
                     elf_hdr=(Elf32_Ehdr*)file_addr[j];
                     if(elf_hdr->e_type!=2){
-                        f1=load_link_elf(files, reloc_addr+c, j);
+                        f1=load_link_elf(files, j, reloc_addr);
                         /*print_num(f1);
                         print_text(delim);*/
                     }

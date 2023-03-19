@@ -2,7 +2,6 @@
 global read_port
 global write_port
 global print_char
-global jump
 global call_func
 global halt
 global load_idt
@@ -24,6 +23,7 @@ global read_cr2
 [extern timer_task]
 [extern system_call_task]
 [extern page_fault_task]
+[extern print_num]
 read_port:
 	mov edx, [esp + 4]
     xor eax, eax
@@ -56,12 +56,16 @@ print_char:
     mov [ebx], al
     ret
 
-jump:
-    jmp [esp + 4]
-
 call_func:
-    mov eax, [esp + 4]
-    call eax;
+    pushad
+    mov eax, [esp + 36]
+    mov ebp, [esp + 40]
+    mov ebx, esp
+    mov esp, ebp
+    push ebx
+    call eax
+    pop esp
+    popad
     ret
 
 halt:
