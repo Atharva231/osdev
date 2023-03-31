@@ -3,6 +3,7 @@ gcc -fno-PIC -fno-stack-protector -m32 -s -c -o kernel.o kernel.c
 nasm program_entry.asm -f elf32 -o program_entry.o
 nasm assembly_instructs.asm -f elf32 -o assembly_instructs.o
 nasm free_sectors.asm -o free_sectors.bin
+nasm fat.asm -o fat.bin
 cd boot
 nasm boot.asm -o boot.bin
 nasm gapper.asm -o gapper.bin

@@ -6,7 +6,14 @@ extern uint8_t read_port(uint16_t port);
 extern void write_port(uint16_t port, uint8_t data);
 static uint8_t prev_key=0;
 static bool print_status=false;
+static uint32_t home_addr;
 uint8_t* key_buff;
+void kb_init(uint32_t addr)
+{
+    /* 0xFD is 11111101 - enables only IRQ1 (keyboard)*/
+    write_port(0x21 , 0xFD);
+    home_addr=addr;
+}
 void set_print_status(bool f){
     print_status=f;
 }
@@ -217,10 +224,10 @@ uint8_t keymap_caps(uint8_t t){
         return '\0';
     }
 }
-void keyboard_get_print(){
+uint32_t keyboard_get_print(){
     write_port(0x20, 0x20);
+    uint32_t t,f=1;
     uint8_t str[] = ".";
-    uint32_t t;
     if(read_port(KEYBOARD_STATUS_PORT) & 0x1){
         t = read_port(KEYBOARD_DATA_PORT);
 		if(t==14){
@@ -233,6 +240,10 @@ void keyboard_get_print(){
             else{
                 str[0] = keymap_caps(t);
             }
+            if(prev_key==29 && t==44){
+                //asm("mov %0, 44(%%ebp)"::"r"(home_addr));
+                f=home_addr;
+            }
     		if(print_status)
                 print_text(str);
     		else{
@@ -242,4 +253,5 @@ void keyboard_get_print(){
         }
         prev_key=t;
     }
+    return f;
 }

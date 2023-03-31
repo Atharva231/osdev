@@ -26,20 +26,20 @@ uint16_t count_files(){
     return c;
 }
 void filesystem_init(uint32_t addr){
-    filesystem_addr = addr;
-    bool f = true;
+    filesystem_addr = addr/0x200;
+    bool f_end = true;
     uint16_t ptr;
     uint8_t* ptr_buff;
     root = create_dir_list("root");
     dir_temp=root;
     file_temp=0;
     ptr=0;
-    read_sectors((uint16_t*)buff, addr, 0x1);
-    while(f){
+    read_sectors((uint16_t*)buff, filesystem_addr, 0x1);
+    while(f_end){
         if(ptr>=512){
             ptr=0;
-            read_sectors((uint16_t*)buff, addr, 0x1);
-            addr+=1;
+            read_sectors((uint16_t*)buff, filesystem_addr, 0x1);
+            filesystem_addr+=1;
         }
         switch (buff[ptr])
         {
@@ -120,7 +120,7 @@ void filesystem_init(uint32_t addr){
             break;
 
         case '!':
-            f=false;
+            f_end=false;
             break;
 
         default:
@@ -282,10 +282,10 @@ bool update_file(uint8_t* f_name, uint8_t* src_addr, uint32_t bytes){
     temp_file_addr[0][1]=sectors_len;
     write_sectors(temp_file_addr[0][0], sectors_len, (uint16_t*) src_addr);
     for(uint8_t i=0;i<ENTRIES_PER_FILE;i++){
-	if(file->file_addr[i][0]!=0)
-	   free_sector(file->file_addr[i][0], file->file_addr[i][1]);
-	file->file_addr[i][0]=temp_file_addr[i][0];
-	file->file_addr[i][1]=temp_file_addr[i][1];
+    	if(file->file_addr[i][0]!=0)
+    	   free_sector(file->file_addr[i][0], file->file_addr[i][1]);
+    	file->file_addr[i][0]=temp_file_addr[i][0];
+    	file->file_addr[i][1]=temp_file_addr[i][1];
     }
     return true;
 }
@@ -294,14 +294,18 @@ uint32_t file_size(uint8_t* f_name){
     uint32_t s=0;
     for(uint8_t i=0;i<ENTRIES_PER_FILE;i++)
 	   s+=file->file_addr[i][1];
-    s*=512;
     return s;
 }
-void read_file(uint8_t* f_name, uint8_t* src_addr){
+void read_file(uint8_t* f_name, uint8_t* dst_addr){
     struct file_list_element* file = search_file(f_name);
-    uint32_t c=0;
+    uint32_t c=0,lba, f_size;
     for(uint8_t i=0;i<ENTRIES_PER_FILE;i++,c+=(file->file_addr[i][1]*200)){
-	   read_sectors((uint16_t*)&src_addr[c], file->file_addr[i][0], file->file_addr[i][1]);
+        lba=file->file_addr[i][0]/0x200;
+        if(file->file_addr[i][1]%0x200!=0)
+            f_size=(file->file_addr[i][1]/0x200)+1;
+        else
+            f_size=file->file_addr[i][1]/0x200;
+	   read_sectors((uint16_t*)&dst_addr[c], lba, f_size);
     }
 }
 struct dir_list_element* search_dir(uint8_t* dirName){

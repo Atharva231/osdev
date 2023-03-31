@@ -4,6 +4,10 @@ extern void disable_interrupts();
 extern void enable_interrupts();
 #include<stdint.h>
 
+void timer_init(void){
+	write_port(0x21 , 0xFE);
+}
+
 void set_pit_count(unsigned count) {
 	// Disable interrupts
 	disable_interrupts();

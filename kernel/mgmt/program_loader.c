@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <elf.h>
-#include "process_mgmt.c"
 static uint32_t reloc_addr;
 uint32_t perm_parser(uint32_t flag){
     switch(flag){

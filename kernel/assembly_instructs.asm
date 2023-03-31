@@ -2,7 +2,8 @@
 global read_port
 global write_port
 global print_char
-global call_func
+global exec_prg
+global resume_prg
 global halt
 global load_idt
 global load_gdt
@@ -12,8 +13,9 @@ global enable_interrupts
 global disable_interrupts
 global keyboard_handler
 global port_word_in
-global port_long_out
 global port_word_out
+global port_dword_in
+global port_dword_out
 global page_fault_handler
 global enablePaging
 global loadPageDirectory
@@ -29,10 +31,9 @@ read_port:
     xor eax, eax
 	in al, dx	
 	ret
-
 write_port:
 	mov   edx, [esp + 4]    
-	mov   al, [esp + 4 + 4]  
+	mov   al, [esp + 8]  
 	out   dx, al  
 	ret
 port_word_in:
@@ -40,23 +41,30 @@ port_word_in:
     in ax, dx
     ret
 
-port_long_out:
-    mov edx, [esp + 4]
-    mov eax, [esp + 8]
-    out dx, eax
-    ret
 port_word_out:
     mov edx, [esp + 4]
     mov ax, [esp + 8]
     out dx, ax
     ret
+
+port_dword_in:
+    mov edx, [esp + 4]
+    in eax, dx
+    ret
+
+port_dword_out:
+    mov edx, [esp + 4]
+    mov eax, [esp + 8]
+    out dx, eax
+    ret
+
 print_char:
     mov   ebx, [esp + 4]
-	mov   al, [esp + 4 + 4]
+	mov   al, [esp + 8]
     mov [ebx], al
     ret
 
-call_func:
+exec_prg:
     pushad
     mov eax, [esp + 36]
     mov ebp, [esp + 40]
@@ -65,6 +73,15 @@ call_func:
     push ebx
     call eax
     pop esp
+    popad
+    ret
+
+resume_prg:
+    mov eax, [esp + 4]
+    mov [ebp + 4], eax
+    mov eax, [esp + 8]
+    mov esp, eax
+    popfd
     popad
     ret
 
@@ -95,8 +112,16 @@ keyboard_handler:
 	pushad
     cld
     call keyboard_get_print
+    mov ebx, 1
+    cmp eax, ebx
+    jne chgPrg
 	popad
     iretd
+    chgPrg:
+        push dword[esp + 40]
+        push cs
+        push eax
+        iretd
 
 system_call_handler:
     pushad
