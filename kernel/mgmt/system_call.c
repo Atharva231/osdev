@@ -3,9 +3,11 @@
 #include <stdbool.h>
 static uint32_t syscall_buff[SYSCALL_BUFF_LEN];
 static struct Process_Control_Block* pcb_head=0;
-static struct Process_Control_Block* pcb_ptr=0;
 uint32_t* get_syscall_buff(){
 	return syscall_buff;
+}
+struct Process_Control_Block* get_pcb_head(){
+    return pcb_head;
 }
 void system_call_task(){
     uint8_t delim[]=",";
@@ -16,6 +18,7 @@ void system_call_task(){
     uint8_t* file_names=(uint8_t*)syscall_buff[1];
     uint8_t buff[FILE_NAME_LEN];
     uint32_t* files;
+    static struct Process_Control_Block* pcb_ptr=0;
     switch(syscall_buff[0]){
     case 1:
     	if(syscall_buff[1]==1)
@@ -137,6 +140,7 @@ void system_call_task(){
             }
             ptr=files[t]+file_size(buff);
             read_file(buff, (uint8_t*)files[t]);
+            t+=1;
         }
         syscall_buff[1]=(uint32_t)files;
         syscall_buff[3]=get_heap_size(syscall_buff[1], 0);
@@ -155,7 +159,9 @@ void system_call_task(){
         pcb_ptr->text_size=f_size;
         pcb_ptr->bss_start=syscall_buff[2];
         pcb_ptr->stack_start=syscall_buff[1];
-        pcb_ptr->stack_ptr=pcb_head->stack_start;
+        uint32_t* ptr=(uint32_t*)pcb_ptr->stack_start;
+        *ptr=pcb_ptr->pid;
+        pcb_ptr->esp=pcb_ptr->stack_start-4;
         pcb_ptr->entry_addr=temp;
         temp=(uint32_t)pcb_ptr;
         break;

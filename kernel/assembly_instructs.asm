@@ -22,6 +22,7 @@ global loadPageDirectory
 global enable_PSE
 global read_cr2
 [extern keyboard_get_print]
+[extern save_state]
 [extern timer_task]
 [extern system_call_task]
 [extern page_fault_task]
@@ -78,8 +79,6 @@ exec_prg:
 
 resume_prg:
     mov eax, [esp + 4]
-    mov [ebp + 4], eax
-    mov eax, [esp + 8]
     mov esp, eax
     popfd
     popad
@@ -118,6 +117,13 @@ keyboard_handler:
 	popad
     iretd
     chgPrg:
+        push esp
+        push dword[esp + 40]
+        push dword[esp + 40]
+        call save_state
+        pop ecx
+        pop ecx
+        pop ecx
         push dword[esp + 40]
         push cs
         push eax

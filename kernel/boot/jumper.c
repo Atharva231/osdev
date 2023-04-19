@@ -2,7 +2,7 @@ void jumper();
 void start(){
     jumper();
 }
-#include "../drivers/disk.c"
+#include "../drivers/ata_pio.c"
 #include <stdint.h>
 extern void jump(uint32_t addr);
 extern void print_char(uint32_t cursor, uint32_t chr);
