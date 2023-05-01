@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
+extern uint32_t resume_prg();
 static uint32_t id_count=0;
 static uint32_t home_addr;
 struct Process_Control_Block* get_pcb_head();
@@ -32,23 +33,44 @@ struct Process_Control_Block* get_live_pcb(struct Process_Control_Block* pcb_hea
 	}
 	return 0;
 }
-uint32_t save_state(uint32_t addr, uint32_t flag, uint32_t esp){
+uint32_t save_state(uint32_t int_id, uint32_t addr, uint32_t flag, uint32_t esp){
 	struct Process_Control_Block* pcb=get_live_pcb(get_pcb_head());
 	if(pcb!=0){
-		pcb->pstat=1;
 		pcb->esp=esp;
 		pcb->entry_addr=addr;
 		pcb->pflags=flag;
-		/*print_num(addr);
+		print_num(pcb->pid);
+		print_text(",");
+		print_num(addr);
 		print_text(",");
 		print_num(flag);
 		print_text(",");
 		print_num(esp);
 		print_text(",");
 		print_num(pcb->stack_start);
-		print_text(",");*/
+		print_text(",");
 	}
-	return home_addr;
+	if(int_id==2){
+		pcb->pstat=1;
+		return home_addr;
+	}
+	else if(int_id==3)
+		return (uint32_t)resume_prg;
+}
+uint32_t resume_prg(){
+	uint32_t id=1;
+	struct Process_Control_Block* pcb=get_pcb(get_pcb_head(), id);
+	if(pcb==0){
+		return 0;
+	}
+	if(pcb->pstat!=1){
+		return 0;
+	}
+	pcb->pstat=2;
+	asm("mov %0, %%esp"::"r"(pcb->esp));
+	asm("popal");
+	asm("iretl");
+	return 1;
 }
 struct Process_Control_Block* create_pcb_list(){
 	struct Process_Control_Block* pcb_head=(struct Process_Control_Block*)mem_alloc(sizeof(struct Process_Control_Block));

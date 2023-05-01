@@ -36,7 +36,7 @@ void kmain(){
     clear_screen();
     disk_init(0x10000, 0x100000);
     vmm_init(0xFFFFF);
-    filesystem_init(0x7800);
+    filesystem_init(0x7A00);
     set_home_addr((uint32_t)prg);
     uint8_t string[]="Atharva ";
     uint8_t delim[]=",";

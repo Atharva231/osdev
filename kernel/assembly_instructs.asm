@@ -3,7 +3,6 @@ global read_port
 global write_port
 global print_char
 global exec_prg
-global resume_prg
 global halt
 global load_idt
 global load_gdt
@@ -77,13 +76,6 @@ exec_prg:
     popad
     ret
 
-resume_prg:
-    mov eax, [esp + 4]
-    mov esp, eax
-    popfd
-    popad
-    ret
-
 halt:
     jmp $
 
@@ -120,7 +112,9 @@ keyboard_handler:
         push esp
         push dword[esp + 40]
         push dword[esp + 40]
+        push eax
         call save_state
+        pop ebx
         pop ecx
         pop ecx
         pop ecx
@@ -128,6 +122,7 @@ keyboard_handler:
         push cs
         push eax
         iretd
+        
 
 system_call_handler:
     pushad
@@ -169,4 +164,3 @@ enable_PSE:
 read_cr2:
     mov eax, cr2
     ret
-

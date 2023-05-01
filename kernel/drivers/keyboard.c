@@ -241,6 +241,9 @@ uint32_t keyboard_get_print(){
             if(prev_key==29 && t==45){
                 f=2;
             }
+            else if(prev_key==29 && t==19){
+                f=3;
+            }
     		if(print_status)
                 print_text(str);
     		else{
