@@ -8,6 +8,7 @@ void start(){
 #include "./drivers/keyboard.c"
 #include "./drivers/ata_pio.c"
 #include "./drivers/pci.c"
+#include "./drivers/rtc.c"
 #include "./mgmt/disk_mgmt.c"
 #include "./mgmt/virtual_memory_mgmt.c"
 #include "./mgmt/filesystem.c"
@@ -30,6 +31,7 @@ void kmain(){
     idt_init();
     kb_init();
     set_print_status(true);
+    rtc_init();
     //set_pit_count(1000);
     //timer_init();
     heap_init(0xB00000, 0xC00000);
@@ -50,13 +52,20 @@ void kmain(){
     asm("int $0x80");
     //print_num(k[0]);
     exec_prg(k[0], k[1]);*/
-    k[0]=22;
+    /*k[0]=22;
     uint8_t files[]="prg.c prg_aid.c ";
     k[1]=(uint32_t)&files[0];
     asm("int $0x80");
     struct Process_Control_Block* pcb=(struct Process_Control_Block*)k[0];
     pcb->pstat=2;
     exec_prg(pcb->entry_addr, pcb->esp);
-    pcb->pstat=0;
+    pcb->pstat=0;*/
+    uint32_t rtc_buff[3];
+    read_time(rtc_buff);
+    print_num(rtc_buff[2]);
+    print_text(":");
+    print_num(rtc_buff[1]);
+    print_text(":");
+    print_num(rtc_buff[0]);
     halt();
 }

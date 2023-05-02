@@ -1,6 +1,6 @@
 [bits 32]
-global read_port
-global write_port
+global port_byte_in
+global port_byte_out
 global print_char
 global exec_prg
 global halt
@@ -26,12 +26,12 @@ global read_cr2
 [extern system_call_task]
 [extern page_fault_task]
 [extern print_num]
-read_port:
+port_byte_in:
 	mov edx, [esp + 4]
     xor eax, eax
 	in al, dx	
 	ret
-write_port:
+port_byte_out:
 	mov   edx, [esp + 4]    
 	mov   al, [esp + 8]  
 	out   dx, al  

@@ -1,6 +1,6 @@
 #include<stdint.h>
-extern uint8_t read_port(uint16_t port);
-extern void write_port(uint16_t port, uint8_t data);
+extern uint8_t port_byte_in(uint16_t port);
+extern void port_byte_out(uint16_t port, uint8_t data);
 extern uint16_t port_word_in(uint16_t port);
 extern void port_word_out(uint16_t port, uint16_t value);
 
@@ -29,12 +29,12 @@ void read_sectors(uint16_t *target, uint32_t LBA, uint8_t sector_count)
 {
 
 	ATA_wait_BSY();
-	write_port(0x1F6,0xE0 | ((LBA >>24) & 0xF));
-	write_port(0x1F2,sector_count);
-	write_port(0x1F3, (uint8_t) LBA);
-	write_port(0x1F4, (uint8_t)(LBA >> 8));
-	write_port(0x1F5, (uint8_t)(LBA >> 16)); 
-	write_port(0x1F7,0x20); //Send the read command
+	port_byte_out(0x1F6,0xE0 | ((LBA >>24) & 0xF));
+	port_byte_out(0x1F2,sector_count);
+	port_byte_out(0x1F3, (uint8_t) LBA);
+	port_byte_out(0x1F4, (uint8_t)(LBA >> 8));
+	port_byte_out(0x1F5, (uint8_t)(LBA >> 16)); 
+	port_byte_out(0x1F7,0x20); //Send the read command
 
 	//uint16_t *target = (uint16_t*) target_address;
 
@@ -51,12 +51,12 @@ void read_sectors(uint16_t *target, uint32_t LBA, uint8_t sector_count)
 void write_sectors(uint32_t LBA, uint8_t sector_count, uint16_t* bytes)
 {
 	ATA_wait_BSY();
-	write_port(0x1F6,0xE0 | ((LBA >>24) & 0xF));
-	write_port(0x1F2,sector_count);
-	write_port(0x1F3, (uint8_t) LBA);
-	write_port(0x1F4, (uint8_t)(LBA >> 8));
-	write_port(0x1F5, (uint8_t)(LBA >> 16)); 
-	write_port(0x1F7,0x30); //Send the write command
+	port_byte_out(0x1F6,0xE0 | ((LBA >>24) & 0xF));
+	port_byte_out(0x1F2,sector_count);
+	port_byte_out(0x1F3, (uint8_t) LBA);
+	port_byte_out(0x1F4, (uint8_t)(LBA >> 8));
+	port_byte_out(0x1F5, (uint8_t)(LBA >> 16)); 
+	port_byte_out(0x1F7,0x30); //Send the write command
 
 	for (int j =0;j<sector_count;j++)
 	{
@@ -71,9 +71,9 @@ void write_sectors(uint32_t LBA, uint8_t sector_count, uint16_t* bytes)
 
 static void ATA_wait_BSY()   //Wait for bsy to be 0
 {
-	while(read_port(0x1F7)&STATUS_BSY);
+	while(port_byte_in(0x1F7)&STATUS_BSY);
 }
 static void ATA_wait_DRQ()  //Wait fot drq to be 1
 {
-	while(!(read_port(0x1F7)&STATUS_RDY));
+	while(!(port_byte_in(0x1F7)&STATUS_RDY));
 }

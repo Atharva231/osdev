@@ -3,9 +3,6 @@
 #define IDT_SIZE 256
 #include<stdint.h>
 
-extern uint8_t read_port(uint16_t port);
-extern void write_port(uint16_t port, uint8_t data);
-
 static uint32_t cursor;
 
 void set_cursor(uint32_t cursor1){
@@ -32,6 +29,27 @@ uint32_t print_color_text(uint8_t *str, uint8_t color){
     return cursor;
 }
 
+uint32_t print_num_hex(uint32_t n){
+    uint8_t *pointer = (uint8_t*) (SCREEN_START + cursor);
+    int i=1;
+    uint32_t j=0;
+    uint8_t t;
+    uint8_t num_buff[10];
+    uint32_t temp;
+    while(n!=0) {
+		temp = n % 16;
+		if( temp < 10)
+		    temp =temp + 48; 
+        else
+		    temp = temp + 55;
+		num_buff[i++]= temp;
+		n = n / 16;
+	}
+    for(uint32_t k=i-1;k>0;k--,j+=2)
+	    pointer[j]=num_buff[k];
+    cursor = j+cursor;
+    return cursor;
+}
 uint32_t print_num(uint32_t n){
     uint8_t *pointer = (uint8_t*) (SCREEN_START + cursor);
     int i=-1;

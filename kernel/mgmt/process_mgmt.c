@@ -39,7 +39,7 @@ uint32_t save_state(uint32_t int_id, uint32_t addr, uint32_t flag, uint32_t esp)
 		pcb->esp=esp;
 		pcb->entry_addr=addr;
 		pcb->pflags=flag;
-		print_num(pcb->pid);
+		/*print_num(pcb->pid);
 		print_text(",");
 		print_num(addr);
 		print_text(",");
@@ -48,17 +48,14 @@ uint32_t save_state(uint32_t int_id, uint32_t addr, uint32_t flag, uint32_t esp)
 		print_num(esp);
 		print_text(",");
 		print_num(pcb->stack_start);
-		print_text(",");
+		print_text(",");*/
 	}
 	if(int_id==2){
 		pcb->pstat=1;
 		return home_addr;
 	}
-	else if(int_id==3)
-		return (uint32_t)resume_prg;
 }
-uint32_t resume_prg(){
-	uint32_t id=1;
+uint32_t resume_prg(uint32_t id){
 	struct Process_Control_Block* pcb=get_pcb(get_pcb_head(), id);
 	if(pcb==0){
 		return 0;

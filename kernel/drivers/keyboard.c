@@ -2,15 +2,13 @@
 #define KEYBOARD_STATUS_PORT 0X64
 #include <stdint.h>
 #include <stdbool.h>
-extern uint8_t read_port(uint16_t port);
-extern void write_port(uint16_t port, uint8_t data);
 static uint8_t prev_key=0;
 static bool print_status=false;
 uint8_t* key_buff;
 void kb_init()
 {
     /* 0xFD is 11111101 - enables only IRQ1 (keyboard)*/
-    write_port(0x21 , 0xFD);
+    port_byte_out(0x21 , 0xFD);
 }
 void set_print_status(bool f){
     print_status=f;
@@ -223,11 +221,11 @@ uint8_t keymap_caps(uint8_t t){
     }
 }
 uint32_t keyboard_get_print(){
-    write_port(0x20, 0x20);
+    port_byte_out(0x20, 0x20);
     uint32_t t,f=1;
     uint8_t str[] = ".";
-    if(read_port(KEYBOARD_STATUS_PORT) & 0x1){
-        t = read_port(KEYBOARD_DATA_PORT);
+    if(port_byte_in(KEYBOARD_STATUS_PORT) & 0x1){
+        t = port_byte_in(KEYBOARD_DATA_PORT);
 		if(t==14){
 			del_char();
 		}
@@ -240,9 +238,6 @@ uint32_t keyboard_get_print(){
             }
             if(prev_key==29 && t==45){
                 f=2;
-            }
-            else if(prev_key==29 && t==19){
-                f=3;
             }
     		if(print_status)
                 print_text(str);
