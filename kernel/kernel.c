@@ -60,12 +60,16 @@ void kmain(){
     pcb->pstat=2;
     exec_prg(pcb->entry_addr, pcb->esp);
     pcb->pstat=0;*/
-    uint32_t rtc_buff[3];
-    read_time(rtc_buff);
-    print_num(rtc_buff[2]);
-    print_text(":");
-    print_num(rtc_buff[1]);
-    print_text(":");
-    print_num(rtc_buff[0]);
+    uint32_t bus=0, device=3, function=0;
+    print_text("Vendor ID: ");
+    print_num_hex(getVendorID(bus, device, function));
+    print_text(" Device ID: ");
+    print_num_hex(getDeviceID(bus, device, function));
+    print_text(" Class ID: ");
+    print_num_hex(getClassId(bus, device, function));
+    print_text(" SubClass ID: ");
+    print_num_hex(getSubClassId(bus, device, function));
+    print_text(" BAR 0: ");
+    print_num_hex(getBAR(bus, device, function, 0x0));
     halt();
 }

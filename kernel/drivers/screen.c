@@ -30,6 +30,7 @@ uint32_t print_color_text(uint8_t *str, uint8_t color){
 }
 
 uint32_t print_num_hex(uint32_t n){
+    print_text("0x");
     uint8_t *pointer = (uint8_t*) (SCREEN_START + cursor);
     int i=1;
     uint32_t j=0;
