@@ -20,6 +20,8 @@ global enablePaging
 global loadPageDirectory
 global enable_PSE
 global read_cr2
+global get_msr
+global set_msr
 [extern keyboard_get_print]
 [extern save_state]
 [extern timer_task]
@@ -152,7 +154,8 @@ loadPageDirectory:
     ret
 
 enablePaging:
-    mov eax, 0x80000001
+    mov eax, cr0
+    or eax, 0x80000000
     mov cr0, eax
     ret
 
@@ -163,4 +166,20 @@ enable_PSE:
 
 read_cr2:
     mov eax, cr2
+    ret
+
+get_msr:
+    mov ecx, [esp + 4]
+    mov ebx, [esp + 8]
+    rdmsr
+    mov [ebx], eax
+    mov [ebx + 4], edx
+    ret
+
+set_msr:
+    mov ecx, [esp + 4]
+    mov ebx, [esp + 8]
+    mov eax, [ebx]
+    mov edx, [ebx + 4]
+    wrmsr
     ret

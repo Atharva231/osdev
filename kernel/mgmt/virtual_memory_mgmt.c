@@ -85,6 +85,10 @@ void vmm_init(uint32_t limit){
     {
         map_page((i * 0x1000), (i * 0x1000), 0x3);
     }
+    for(uint32_t i=0xBF000; i<0xFFFFF; i++)
+    {
+        map_page((i * 0x1000), (i * 0x1000), 0x3);
+    }
     loadPageDirectory(page_directory);
     enablePaging();
     enable_PSE();

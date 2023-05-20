@@ -4,7 +4,7 @@
 #include<stdint.h>
 
 static uint32_t cursor;
-
+static uint8_t* VGA = (unsigned char*) 0xA0000;
 void set_cursor(uint32_t cursor1){
     cursor=cursor1;
 }
@@ -75,6 +75,24 @@ void clear_screen(){
         pointer[i]=0;
     }
     set_cursor(0);
+}
+void set_pixel(uint16_t x, uint16_t y, uint8_t color) {
+  uint16_t offset;
+  if(0 <= x && x < 320) {
+    if(0 <= y && y < 200) {
+      offset = 320*y + x;
+      VGA[offset] = color;
+    }
+  }
+}
+void set_VGA_Frame(uint8_t* src){
+    uint16_t src_ptr=0,offset;
+    for(uint16_t x=0;x<320;x++){
+        for(uint16_t y=0;y<200;y++,src_ptr++){
+            offset = 320*y + x;
+            VGA[offset] = src[src_ptr];
+        }
+    }
 }
 uint32_t del_char(){
     if(cursor + SCREEN_START>0xb8000){
