@@ -11,6 +11,7 @@ void start(){
 #include "./drivers/rtc.c"
 #include "./drivers/acpi.c"
 #include "./drivers/ioapic.c"
+#include "./drivers/lapic.c"
 #include "./mgmt/disk_mgmt.c"
 #include "./mgmt/virtual_memory_mgmt.c"
 #include "./mgmt/multi_proc.c"
@@ -31,7 +32,8 @@ void prg(){
     halt();
 }
 void kmain(){
-    pic_init();
+    idt_init();
+    lapic_init();
     kb_init();
     set_print_status(true);
     rtc_init();
@@ -60,6 +62,5 @@ void kmain(){
     for(uint16_t i=0,j=0;j<0x1000;i++,j+=2){
         ptr[j]=ebda[i];
     }*/
-    acpi_init();
     halt();
 }

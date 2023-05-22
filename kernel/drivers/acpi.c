@@ -22,46 +22,46 @@ struct ACPISDTHeader {
 struct MADT_MDATA{
     uint8_t* lapic_id;
     uint32_t flag;
-};
+} *madt_mdata;
 struct ENTRY_HEADER{
     uint8_t entry_type;
     uint8_t len;
-};
+} *madt_entry_hdr;
 struct ENTRY_0{
     uint8_t acpi_id;
     uint8_t apic_id;
     uint32_t flag;
-};
+} *entry0;
 struct ENTRY_1{
     uint8_t ioapic_id;
     uint8_t unused;
     uint32_t ioapic_addr;
     uint32_t gsib;
-};
+} *entry1;
 struct ENTRY_2
 {
     uint8_t bus_src;
     uint8_t irq_src;
     uint32_t gsi;
     uint16_t flags;
-};
+} *entry2;
 struct ENTRY_3
 {
     uint8_t nmi_src;
     uint8_t unused;
     uint16_t flags;
     uint32_t gsi;
-};
+} *entry3;
 struct ENTRY_4{
     uint8_t acpi_id;
     uint16_t flags;
     uint8_t lint;
-};
+} *entry4;
 struct ENTRY_5
 {
     uint16_t unused;
     uint64_t lapic_phys_addr;
-};
+} *entry5;
 
 static struct RSDPDescriptor* rsdp;
 static struct ACPISDTHeader* acpi_sdt;
@@ -97,10 +97,44 @@ bool acpi_init(){
         }
     }
     struct ACPISDTHeader* madt=(struct ACPISDTHeader*)((uint32_t)ptr1);
-    ptr2=(uint32_t*)(((uint32_t)ptr1) + 44);
     entries=(madt->Length - sizeof(struct ACPISDTHeader))/4;
-    print_text(madt->Signature);
-    print_text(" ");
-    print_num_hex(*ptr2);
+    madt_mdata=(struct MADT_MDATA*)(((uint32_t)ptr1) + 36);
+    madt_entry_hdr=(struct ENTRY_HEADER*)(((uint32_t)ptr1) + 44);
+    for(; (uint32_t)(madt_entry_hdr) < (uint32_t)(madt_entry_hdr)+madt->Length; madt_entry_hdr += madt_entry_hdr->len){
+        switch (madt_entry_hdr->entry_type)
+        {
+        /*case 0:
+            entry0=(struct ENTRY_0*)((uint32_t)madt_entry_hdr + 2);
+            print_num_hex(entry0->acpi_id);
+            print_text(" ");
+            print_num_hex(entry0->apic_id);
+            print_text(" ");
+            print_num_hex(entry0->flag);
+            print_text(" ");
+            break;
+        case 1:
+            entry1=(struct ENTRY_1*)((uint32_t)madt_entry_hdr + 2);
+            print_num_hex(entry1->ioapic_id);
+            print_text(" ");
+            print_num_hex(entry1->ioapic_addr);
+            print_text(" ");
+            print_num_hex(entry1->gsib);
+            print_text(" ");
+            break;*/
+        case 2:
+            entry2=(struct ENTRY_2*)((uint32_t)madt_entry_hdr + 2);
+             print_num_hex(entry2->bus_src);
+            print_text(" ");
+            print_num_hex(entry2->irq_src);
+            print_text(" ");
+            print_num_hex(entry2->gsi);
+            print_text(" ");
+            print_num_hex(entry2->flags);
+            print_text(" ");
+            break;
+        default:
+            break;
+        }
+    }
     return true;
 }

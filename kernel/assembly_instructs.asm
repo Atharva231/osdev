@@ -108,6 +108,7 @@ keyboard_handler:
     mov ebx, 1
     cmp eax, ebx
     jne chgPrg
+    mov dword [0xFEE000B0], 0x00
 	popad
     iretd
     chgPrg:
@@ -123,6 +124,7 @@ keyboard_handler:
         push dword[esp + 40]
         push cs
         push eax
+        mov dword [0xFEE000B0], 0x00
         iretd
         
 
@@ -130,6 +132,7 @@ system_call_handler:
     pushad
     cld
     call system_call_task
+    mov dword [0xFEE000B0], 0x00
     popad
     iretd
     
@@ -137,6 +140,7 @@ timer_handler:
     pushad
     cld
     call timer_task
+    mov dword [0xFEE000B0], 0x00
     popad
     iretd
 
@@ -144,6 +148,7 @@ page_fault_handler:
     pushad
     cld
     call page_fault_task
+    mov dword [0xFEE000B0], 0x00
     popad
     add esp, 4
     iretd

@@ -39,7 +39,4 @@ void set_ioapic_redtbl(uint32_t offset, uint32_t *data){
     *iowin=redtbl_lo;
     *ioregsel=IOREDTBL+offset+1;
     *iowin=redtbl_hi;
-    /*print_num_hex(redtbl_hi);
-    print_text(" ");
-    print_num_hex(redtbl_lo);*/
 }

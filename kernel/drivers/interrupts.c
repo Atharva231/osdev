@@ -1,6 +1,5 @@
 #define IDT_SIZE 256
 #include<stdint.h>
-#include <cpuid.h>
 
 extern void load_idt(uint32_t *addr);
 extern void keyboard_handler();
@@ -9,37 +8,7 @@ extern void system_call_handler();
 extern void page_fault_handler();
 extern void halt();
 void general_protec_task(uint32_t error_code);
-uint32_t* lapic_addr=(uint32_t*)0xFEE00000;
-uint32_t* ioapic_addr=(uint32_t*)0xFEC00000;
 
-void disable_8259(){
-	port_byte_out(0x21 , 0xff);
-	port_byte_out(0xA1 , 0xff);
-}
-
-uint32_t check_apic(void)
-{
-    uint32_t eax, unused, edx;
-    __get_cpuid(1, &eax, &unused, &unused, &edx);
-    return edx & (1 << 9);
-}
-
-uint32_t get_apic_id(){
-    uint32_t t, edx;
-    asm("mov $0x1, %eax");
-    asm("cpuid");
-    asm("mov %%ebx, %0":"=r"(t));
-    asm("mov %%edx, %0":"=r"(edx));
-    return t>>16;
-}
-uint32_t lapic_init(){
-	if(check_apic()==0){
-		return 1;
-	}
-	disable_8259();
-	port_byte_out(0x22, 0x70);
-	port_byte_out(0x23, 0x01);
-}
 struct InterruptDescriptor32 {
    	uint16_t offset_lowerbits;        // offset bits 0..15
    	uint16_t selector;        // a code segment selector in GDT or LDT
@@ -48,7 +17,7 @@ struct InterruptDescriptor32 {
    	uint16_t offset_higherbits;        // offset bits 16..31
 };
 struct InterruptDescriptor32 IDT_entry[IDT_SIZE];
-void pic_init(void){
+void idt_init(void){
    	uint32_t keyboard_address, timer_address, system_call_address;
 	uint32_t page_fault_address, general_protec_fault_addr;
 	uint32_t idt_address;
@@ -90,7 +59,7 @@ void pic_init(void){
     IDT_entry[0x0D].type_attr = 0x8F; /* TRAP_GATE */
     IDT_entry[0x0D].offset_higherbits = (general_protec_fault_addr & 0xffff0000) >> 16;
 	/*     Ports
-	*	 PIC1	PIC2
+	*	 	 PIC1	PIC2
 	*Command 0x20	0xA0
 	*Data	 0x21	0xA1
 	*/
@@ -116,10 +85,6 @@ void pic_init(void){
 	port_byte_out(0xA1 , 0x01);
 	/* Initialization finished */
 
-	/* mask interrupts */
-	port_byte_out(0x21 , 0xff);
-	port_byte_out(0xA1 , 0xff);
-
 	/* fill the IDT descriptor */
 	idt_address = (uint32_t)IDT_entry ;
 	idt_ptr[0] = (sizeof (struct InterruptDescriptor32) * IDT_SIZE) + ((idt_address & 0xffff) << 16);
@@ -127,6 +92,7 @@ void pic_init(void){
 
 	load_idt(idt_ptr);
 }
+
 void general_protec_task(uint32_t error_code){
     uint8_t msg[]="General Protection Fault ";
     print_text(msg);
