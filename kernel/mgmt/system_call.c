@@ -165,6 +165,19 @@ void system_call_task(){
         pcb_ptr->entry_addr=temp;
         temp=(uint32_t)pcb_ptr;
         break;
+    
+    case 23:
+        read_time(syscall_buff);
+        temp=syscall_buff[0];
+        break;
+
+    case 24:
+        read_date(syscall_buff);
+        temp=syscall_buff[0];
+        break;
+        
+    default:
+        break;
     }
     syscall_buff[0]=temp;
 }

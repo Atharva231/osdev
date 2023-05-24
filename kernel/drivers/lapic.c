@@ -15,7 +15,8 @@
 #define IRR 0x200
 #define ERR_STAT_REG 0x280
 #define LVT_CMCI 0x2F0
-#define ICR 0x300
+#define ICR_LOW 0x300
+#define ICR_HIGH 0x310
 #define LVT_TR 0x320
 #define LVT_TSR 0x330
 #define LVT_PMCR 0x340
@@ -26,10 +27,18 @@
 #define CCR 0x390
 #define DCR 0x3E0
 
-uint32_t* lapic_addr=(uint32_t*)0xFEE00000;
+#define INTR_VECTOR(data) (data & 0xFFFF)
+#define DELMOD(data) ((data<<8) & 0x700)
+#define DESTMOD(data) ((data<<11) & 0x800)
+#define LEVEL(data) ((data<<14) & 0x4000)
+#define TRIGGER_MODE(data) ((data<<15) & 0x8000)
+#define DEST_SHORTHAND(data) ((data<<18) & 0xC0000)
+#define DEST_FIELD(data) ((data<<24) & 0xFF000000)
 
+uint32_t* lapic_addr=(uint32_t*)0xFEE00000;
 extern void get_msr(uint32_t code, uint32_t* data);
 extern void set_msr(uint32_t code, uint32_t* data);
+
 uint32_t check_apic(void)
 {
     uint32_t eax, unused, edx;
@@ -44,9 +53,55 @@ uint32_t get_apic_id(){
     asm("mov %%edx, %0":"=r"(edx));
     return t>>16;
 }
+void send_IPI(uint32_t *data){
+    uint32_t icr_lo=0;
+    uint32_t icr_hi=0;
+    icr_lo |= INTR_VECTOR(data[0]) | DELMOD(data[1]) | DESTMOD(data[2]);
+    icr_lo |= LEVEL(data[3]) | TRIGGER_MODE(data[4]) | DEST_SHORTHAND(data[5]);
+    icr_hi = DEST_FIELD(data[6]);
+    lapic_addr[ICR_HIGH/4]=icr_hi;
+    lapic_addr[ICR_LOW/4]=icr_lo;
+}
+void self_intr(uint32_t vector){
+    uint32_t icr_lo=0;
+    uint32_t icr_hi=0;
+    icr_lo |= INTR_VECTOR(vector) | DELMOD(0x00) | DESTMOD(0x00);
+    icr_lo |= LEVEL(0x01) | TRIGGER_MODE(0x00) | DEST_SHORTHAND(0x01);
+    lapic_addr[ICR_LOW/4]=icr_lo;
+}
+uint8_t div_val(uint8_t div){
+    switch (div)
+    {
+    case 1:
+        return 0b1011;
+    case 2:
+        return 0b0000;
+    case 4:
+        return 0b0001;
+    case 8:
+        return 0b0010;
+    case 16:
+        return 0b0011;
+    case 32:
+        return 0b1000;
+    case 64:
+        return 0b1001;
+    case 128:
+        return 0b1010;
+    default:
+        break;
+    }
+}
+void set_apic_timer(uint32_t* data){
+    uint32_t t = data[0] & 0xFF;
+    t |= ((data[1]<<17) & 0x60000);
+    lapic_addr[DCR/4] = (div_val(data[2] & 0xF) & 0xF);
+    lapic_addr[LVT_TR/4] = t;
+    lapic_addr[INITIAL_COUNT_REG/4] = data[3];
+}
 void lapic_init(){
 
-    /* mask interrupts */
+    /* mask 8259 pic interrupts */
 	port_byte_out(0x21 , 0xff);
 	port_byte_out(0xA1 , 0xff);
 
@@ -64,6 +119,7 @@ void lapic_init(){
 	uint8_t imcr=port_byte_in(0x23) | 0x01;
 	port_byte_out(0x23, imcr);
 
+    /* set keyboard interrupt */
     uint32_t data[7];
     data[0]=0x21;
     data[1]=0x00;
@@ -74,4 +130,23 @@ void lapic_init(){
     data[6]=0x00;
     set_ioapic_redtbl(0x02, data);
 	
+    /* set and mask 8254 timer interrupt */
+    data[0]=0x20;
+    data[1]=0x00;
+    data[2]=0x00;
+    data[3]=0x01;
+    data[4]=0x00;
+    data[5]=0x01;
+    data[6]=0x00;
+    set_ioapic_redtbl(0x04, data);
+
+    /* set rtc interrupt */
+    data[0]=0x20;
+    data[1]=0x00;
+    data[2]=0x00;
+    data[3]=0x01;
+    data[4]=0x00;
+    data[5]=0x00;
+    data[6]=0x00;
+    set_ioapic_redtbl(0x08, data);
 }

@@ -29,6 +29,14 @@ uint32_t get_ioapic_redtbl(uint32_t offset){
     *ioregsel=IOREDTBL+offset;
     return *iowin;
 }
+void unmask_interrupt(uint32_t offset){
+    *ioregsel=IOREDTBL+offset;
+    *iowin &= 0xFFFEFFFF;
+}
+void mask_interrupt(uint32_t offset){
+    *ioregsel=IOREDTBL+offset;
+    *iowin |= INTERRUPT_MASK(0x01);
+}
 void set_ioapic_redtbl(uint32_t offset, uint32_t *data){
     uint32_t redtbl_lo=0;
     uint32_t redtbl_hi=0;

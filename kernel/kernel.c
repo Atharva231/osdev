@@ -36,9 +36,8 @@ void kmain(){
     lapic_init();
     kb_init();
     set_print_status(true);
+    timer_init();
     rtc_init();
-    //set_pit_count(1000);
-    //timer_init();
     heap_init(0xB00000, 0xC00000);
     clear_screen();
     disk_init(0x10000, 0x100000);
