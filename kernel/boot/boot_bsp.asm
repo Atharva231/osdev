@@ -18,8 +18,11 @@ jmp $
 
 [bits 32]
 BEGIN_PM:
-    mov [0xb8000],byte "h"
-    mov [0xb8002],byte "i"
+    mov ebp, 0x9FFFF
+    mov esp, ebp
+    mov [0xb8000],byte "B"
+    mov [0xb8002],byte "S"
+    mov [0xb8004],byte "P"
     jmp KERNEL_OFFSET
     jmp $
 MSG_LOAD_KERNEL:

@@ -1,21 +1,12 @@
 #include <stdint.h>
+uint32_t get_numcores(){
+    uint32_t ebx=0, unused;
+    __get_cpuid_count(0x0B, 0x01, &unused, &ebx, &unused, &unused);
+    return ebx & 0xFFFF;
+}
 
-void get_tsc_freq(){
-    uint32_t eax=0, ebx=0, ecx=0, edx=0;
-    uint32_t leaf = 0x06;
-    asm("mov %0, %%eax"::"r"(leaf));
-    asm("cpuid");
-    asm("mov %%eax, %0":"=r"(eax));
-    asm("mov %%ebx, %0":"=r"(ebx));
-    asm("mov %%ecx, %0":"=r"(ecx));
-    asm("mov %%edx, %0":"=r"(edx));
-    print_num_hex(eax);
-    print_text(" ");
-    print_num_hex(ebx);
-    print_text(" ");
-    print_num_hex(ecx);
-    print_text(" ");
-    print_num_hex(edx);
-    print_text(" ");
-
+uint32_t get_thread_per_core(){
+    uint32_t ebx=0, unused;
+    __get_cpuid_count(0x0B, 0x00, &unused, &ebx, &unused, &unused);
+    return ebx & 0xFFFF;
 }

@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <cpuid.h>
+#include <stdbool.h>
 #define LAPIC_ID_REG 0x20
 #define LAPIC_VER_REG 0x30
 #define TPR 0x80
@@ -36,6 +37,8 @@
 #define DEST_FIELD(data) ((data<<24) & 0xFF000000)
 
 uint32_t* lapic_addr=(uint32_t*)0xFEE00000;
+uint32_t timer_calib=0;
+bool sleep_flag;
 extern void get_msr(uint32_t code, uint32_t* data);
 extern void set_msr(uint32_t code, uint32_t* data);
 
@@ -46,12 +49,9 @@ uint32_t check_apic(void)
     return edx & (1 << 9);
 }
 uint32_t get_apic_id(){
-    uint32_t t, edx;
-    asm("mov $0x1, %eax");
-    asm("cpuid");
-    asm("mov %%ebx, %0":"=r"(t));
-    asm("mov %%edx, %0":"=r"(edx));
-    return t>>16;
+    uint32_t ebx, edx, unused;
+    __get_cpuid(1, &unused, &ebx, &unused, &edx);
+    return ebx>>16;
 }
 void send_IPI(uint32_t *data){
     uint32_t icr_lo=0;
@@ -92,12 +92,60 @@ uint8_t div_val(uint8_t div){
         break;
     }
 }
+void pause(){
+    sleep_flag=false;
+}
 void set_apic_timer(uint32_t* data){
     uint32_t t = data[0] & 0xFF;
     t |= ((data[1]<<17) & 0x60000);
     lapic_addr[DCR/4] = (div_val(data[2] & 0xF) & 0xF);
     lapic_addr[LVT_TR/4] = t;
     lapic_addr[INITIAL_COUNT_REG/4] = data[3];
+}
+void timer_task(void){
+    timer_calib=*((uint32_t*)0xFEE00390);
+}
+uint32_t calib_lapic_timer(){
+    uint32_t data[]={0x20, 0x00, 1, 0xFFFFFFFF};
+    uint32_t rtc[3];
+    read_time(rtc);
+    uint32_t ps=rtc[0];
+    while(ps==rtc[0]){
+        read_time(rtc);
+    }
+    read_time(rtc);
+    ps=rtc[0];
+    set_apic_timer(data);
+    while(ps==rtc[0]){
+        read_time(rtc);
+    }
+    timer_calib=*((uint32_t*)0xFEE00390);
+    lapic_addr[LVT_TR/4] |= 0x10000;
+    timer_calib = 0xFFFFFFFF-timer_calib;
+    return timer_calib;
+}
+
+void sleep_s(uint32_t time){
+    sleep_flag=true;
+    uint32_t data[]={0x39, 0x00, 1, (timer_calib*time)};
+    set_apic_timer(data);
+    while (sleep_flag);
+}
+void sleep_ms(uint32_t time){
+    sleep_flag=true;
+    double t=timer_calib;
+    t /=1000.0;
+    uint32_t data[]={0x39, 0x00, 1, (t*time)};
+    set_apic_timer(data);
+    while (sleep_flag);
+}
+void sleep_us(uint32_t time){
+    sleep_flag=true;
+    double t=timer_calib;
+    t /=1000000.0;
+    uint32_t data[]={0x39, 0x00, 1, (t*time)};
+    set_apic_timer(data);
+    while (sleep_flag);
 }
 void lapic_init(){
 
@@ -131,7 +179,7 @@ void lapic_init(){
     set_ioapic_redtbl(0x02, data);
 	
     /* set and mask 8254 timer interrupt */
-    data[0]=0x20;
+    data[0]=0x39;
     data[1]=0x00;
     data[2]=0x00;
     data[3]=0x01;
@@ -146,7 +194,7 @@ void lapic_init(){
     data[2]=0x00;
     data[3]=0x01;
     data[4]=0x00;
-    data[5]=0x00;
+    data[5]=0x01;
     data[6]=0x00;
     set_ioapic_redtbl(0x08, data);
 }

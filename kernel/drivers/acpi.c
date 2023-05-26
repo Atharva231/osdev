@@ -103,7 +103,8 @@ bool acpi_init(){
     for(; (uint32_t)(madt_entry_hdr) < (uint32_t)(madt_entry_hdr)+madt->Length; madt_entry_hdr += madt_entry_hdr->len){
         switch (madt_entry_hdr->entry_type)
         {
-        /*case 0:
+        case 0:
+            print_text("Entry 0: ");
             entry0=(struct ENTRY_0*)((uint32_t)madt_entry_hdr + 2);
             print_num_hex(entry0->acpi_id);
             print_text(" ");
@@ -113,6 +114,7 @@ bool acpi_init(){
             print_text(" ");
             break;
         case 1:
+            print_text("Entry 1: ");
             entry1=(struct ENTRY_1*)((uint32_t)madt_entry_hdr + 2);
             print_num_hex(entry1->ioapic_id);
             print_text(" ");
@@ -120,10 +122,11 @@ bool acpi_init(){
             print_text(" ");
             print_num_hex(entry1->gsib);
             print_text(" ");
-            break;*/
+            break;
         case 2:
+            print_text("Entry 2: ");
             entry2=(struct ENTRY_2*)((uint32_t)madt_entry_hdr + 2);
-             print_num_hex(entry2->bus_src);
+            print_num_hex(entry2->bus_src);
             print_text(" ");
             print_num_hex(entry2->irq_src);
             print_text(" ");
@@ -131,6 +134,24 @@ bool acpi_init(){
             print_text(" ");
             print_num_hex(entry2->flags);
             print_text(" ");
+            break;
+        case 3:
+            print_text("Entry 3: ");
+            entry3=(struct ENTRY_3*)((uint32_t)madt_entry_hdr + 2);
+            print_num_hex(entry3->nmi_src);
+            print_text(" ");
+            print_num_hex(entry3->gsi);
+            print_text(" ");
+            print_num_hex(entry3->flags);
+            break;
+        case 4:
+            print_text("Entry 4: ");
+            entry4=(struct ENTRY_4*)((uint32_t)madt_entry_hdr + 2);
+            print_num_hex(entry4->acpi_id);
+            print_text(" ");
+            print_num_hex(entry4->lint);
+            print_text(" ");
+            print_num_hex(entry4->flags);
             break;
         default:
             break;

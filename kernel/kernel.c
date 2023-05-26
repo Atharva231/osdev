@@ -4,12 +4,13 @@ void start(){
 }
 #include "./mgmt/heap.c"
 #include "./drivers/screen.c"
-#include "./drivers/timer.c"
+#include "./drivers/pit_8254.c"
 #include "./drivers/keyboard.c"
 #include "./drivers/ata_pio.c"
 #include "./drivers/pci.c"
 #include "./drivers/rtc.c"
 #include "./drivers/acpi.c"
+#include "./drivers/mp_config.c"
 #include "./drivers/ioapic.c"
 #include "./drivers/lapic.c"
 #include "./mgmt/disk_mgmt.c"
@@ -32,14 +33,15 @@ void prg(){
     halt();
 }
 void kmain(){
+    clear_screen();
     idt_init();
     lapic_init();
     kb_init();
     set_print_status(true);
-    timer_init();
+    pit_timer_init();
     rtc_init();
+    calib_lapic_timer();
     heap_init(0xB00000, 0xC00000);
-    clear_screen();
     disk_init(0x10000, 0x100000);
     vmm_init(0xFFFFF);
     //filesystem_init(0x7C00);
@@ -61,5 +63,11 @@ void kmain(){
     for(uint16_t i=0,j=0;j<0x1000;i++,j+=2){
         ptr[j]=ebda[i];
     }*/
+    *((uint32_t*)0xFEE00300)=0x000C4500;
+    sleep_ms(10);
+    *((uint32_t*)0xFEE00300)=0x000C4608;
+    sleep_us(200);
+    *((uint32_t*)0xFEE00300)=0x000C4608;
+    sleep_us(200);
     halt();
 }

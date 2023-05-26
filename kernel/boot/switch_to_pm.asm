@@ -17,6 +17,4 @@ init_pm:
     mov fs, ax
     mov gs, ax
 
-    mov ebp, 0x9FFFF;
-    mov esp, ebp
-    call BEGIN_PM
+    jmp BEGIN_PM

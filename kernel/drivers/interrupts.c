@@ -4,6 +4,7 @@
 extern void load_idt(uint32_t *addr);
 extern void keyboard_handler();
 extern void timer_handler();
+extern void pause_handler();
 extern void system_call_handler();
 extern void page_fault_handler();
 extern void halt();
@@ -19,7 +20,7 @@ struct InterruptDescriptor32 {
 struct InterruptDescriptor32 IDT_entry[IDT_SIZE];
 void idt_init(void){
    	uint32_t keyboard_address, timer_address, system_call_address;
-	uint32_t page_fault_address, general_protec_fault_addr;
+	uint32_t page_fault_address, general_protec_fault_addr, pause_func_addr;
 	uint32_t idt_address;
 	uint32_t idt_ptr[2];
 
@@ -37,6 +38,13 @@ void idt_init(void){
 	IDT_entry[0x20].zero = 0;
 	IDT_entry[0x20].type_attr = 0x8E; /* INTERRUPT_GATE */
 	IDT_entry[0x20].offset_higherbits = (timer_address & 0xffff0000) >> 16;
+
+	pause_func_addr = (uint32_t)pause_handler;
+	IDT_entry[0x39].offset_lowerbits = pause_func_addr & 0xffff;
+	IDT_entry[0x39].selector = 0x08; /* KERNEL_CODE_SEGMENT_OFFSET */
+	IDT_entry[0x39].zero = 0;
+	IDT_entry[0x39].type_attr = 0x8E; /* INTERRUPT_GATE */
+	IDT_entry[0x39].offset_higherbits = (pause_func_addr & 0xffff0000) >> 16;
 
 	system_call_address = (uint32_t)system_call_handler;
 	IDT_entry[0x80].offset_lowerbits = system_call_address & 0xffff;

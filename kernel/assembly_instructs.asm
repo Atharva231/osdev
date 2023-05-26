@@ -11,11 +11,12 @@ global system_call_handler
 global enable_interrupts
 global disable_interrupts
 global keyboard_handler
+global page_fault_handler
+global pause_handler
 global port_word_in
 global port_word_out
 global port_dword_in
 global port_dword_out
-global page_fault_handler
 global enablePaging
 global loadPageDirectory
 global enable_PSE
@@ -27,6 +28,7 @@ global set_msr
 [extern timer_task]
 [extern system_call_task]
 [extern page_fault_task]
+[extern pause]
 [extern print_num]
 port_byte_in:
 	mov edx, [esp + 4]
@@ -151,6 +153,14 @@ page_fault_handler:
     mov dword [0xFEE000B0], 0x00
     popad
     add esp, 4
+    iretd
+
+pause_handler:
+    pushad
+    cld
+    call pause
+    mov dword [0xFEE000B0], 0x00
+    popad
     iretd
 
 loadPageDirectory:

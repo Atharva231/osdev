@@ -37,6 +37,14 @@ void mask_interrupt(uint32_t offset){
     *ioregsel=IOREDTBL+offset;
     *iowin |= INTERRUPT_MASK(0x01);
 }
+void change_io_vector(uint8_t vector, uint32_t offset){
+    if(offset%2!=0){
+        return;
+    }
+    *ioregsel=IOREDTBL+offset;
+    *iowin &= 0xFFFFFF00;
+    *iowin |= (vector & 0xFF);
+}
 void set_ioapic_redtbl(uint32_t offset, uint32_t *data){
     uint32_t redtbl_lo=0;
     uint32_t redtbl_hi=0;
