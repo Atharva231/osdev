@@ -160,7 +160,7 @@ void lapic_init(){
     set_msr(0x1B, msr);
     
     /* enable spurious interrupt in lapic */
-	lapic_addr[SIVR]=0xFF;
+	lapic_addr[SIVR/4]=0xFF;
     
 	/* set IMCR */
 	port_byte_out(0x22, 0x70);

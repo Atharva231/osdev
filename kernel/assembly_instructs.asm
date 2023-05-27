@@ -1,4 +1,3 @@
-[bits 32]
 global port_byte_in
 global port_byte_out
 global print_char
@@ -198,3 +197,4 @@ set_msr:
     mov edx, [ebx + 4]
     wrmsr
     ret
+

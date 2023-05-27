@@ -11,7 +11,7 @@ ld -melf_i386 -T link_kernel.ld -o kernel.bin --oformat binary
 resize "kernel.bin"
 resize "fat.bin"
 resize "./boot/jumper.bin"
-cat ./boot/boot_bsp.bin ./boot/jumper.bin ./kernel.bin ./fat.bin ../test/prg.o ../test/prg_aid.o ./boot/boot_ap.bin > ../os.bin
+cat ./boot/boot_ap2.bin ./boot/ap_code.bin ./boot/jumper.bin ./kernel.bin ./fat.bin ../test/prg.o ../test/prg_aid.o > ../os.bin
 cd ..
 dd if=os.bin of=os.img
 truncate -s 2M os.img

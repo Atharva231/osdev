@@ -63,11 +63,5 @@ void kmain(){
     for(uint16_t i=0,j=0;j<0x1000;i++,j+=2){
         ptr[j]=ebda[i];
     }*/
-    *((uint32_t*)0xFEE00300)=0x000C4500;
-    sleep_ms(10);
-    *((uint32_t*)0xFEE00300)=0x000C4608;
-    sleep_us(200);
-    *((uint32_t*)0xFEE00300)=0x000C4608;
-    sleep_us(200);
     halt();
 }
