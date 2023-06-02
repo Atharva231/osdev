@@ -12,7 +12,7 @@ static uint32_t page_table[1024*1024] __attribute__((aligned(4096)));
 static uint32_t page_location[1024*1024] __attribute__((aligned(4096)));
 static uint32_t physmem_limit;
 static uint8_t ovf=0;
-static uint32_t kernel_space=0xC00;
+static uint32_t kernel_space=0xD00;
 static uint32_t* physmem_table;
 
 void refresh_tlb(){

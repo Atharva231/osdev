@@ -29,11 +29,11 @@ uint32_t get_ioapic_redtbl(uint32_t offset){
     *ioregsel=IOREDTBL+offset;
     return *iowin;
 }
-void unmask_interrupt(uint32_t offset){
+void unmask_io_interrupt(uint32_t offset){
     *ioregsel=IOREDTBL+offset;
     *iowin &= 0xFFFEFFFF;
 }
-void mask_interrupt(uint32_t offset){
+void mask_io_interrupt(uint32_t offset){
     *ioregsel=IOREDTBL+offset;
     *iowin |= INTERRUPT_MASK(0x01);
 }

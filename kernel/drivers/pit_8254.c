@@ -5,8 +5,8 @@ extern uint8_t port_byte_in(uint16_t port);
 extern void port_byte_out(uint16_t port, uint8_t data);
 extern void disable_interrupts();
 extern void enable_interrupts();
-void unmask_interrupt(uint32_t offset);
-void mask_interrupt(uint32_t offset);
+void unmask_io_interrupt(uint32_t offset);
+void mask_io_interrupt(uint32_t offset);
 
 uint32_t sleep_data[]={14551, 0, 0};
 
@@ -40,5 +40,5 @@ void pit_timer_init(void){
 	//port_byte_out(0x21 , 0xFE);
 	set_pit_count(0x1234DD, 0x30);
 	asm("xor %eax, %eax");	//dummy instruction
-	unmask_interrupt(0x04);
+	unmask_io_interrupt(0x04);
 }

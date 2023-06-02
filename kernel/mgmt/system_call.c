@@ -3,6 +3,7 @@
 #include <stdbool.h>
 static uint32_t syscall_buff[SYSCALL_BUFF_LEN];
 static struct Process_Control_Block* pcb_head=0;
+uint8_t syscall_lock=0;
 uint32_t* get_syscall_buff(){
 	return syscall_buff;
 }
@@ -10,6 +11,8 @@ struct Process_Control_Block* get_pcb_head(){
     return pcb_head;
 }
 void system_call_task(){
+    while(syscall_lock>0);
+    syscall_lock=1;
     uint8_t delim[]=",";
     uint32_t temp=0;
     bool temp_bool=false,f;
@@ -180,4 +183,5 @@ void system_call_task(){
         break;
     }
     syscall_buff[0]=temp;
+    syscall_lock=0;
 }

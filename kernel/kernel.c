@@ -1,6 +1,18 @@
 void kmain();
+void ap_code();
+char call_id=0;
+char num_cores=1;
 void start(){
-    kmain();
+    int id=*((int*)0xFEE00020);
+    id = id>>24;
+    if(id==0){
+        kmain();
+    }
+    else{
+        ++num_cores;
+        while(call_id!=id);
+        ap_code();
+    }
 }
 #include "./mgmt/heap.c"
 #include "./drivers/screen.c"
@@ -23,33 +35,53 @@ void start(){
 #include "./drivers/interrupts.c"
 #include <stdint.h>
 #include <stdbool.h>
-#define SYSCALL_BUFFER_ADDR 0xFFFE0
 
 extern uint32_t exec_prg(uint32_t addr, uint32_t base_ptr);
+uint8_t pc=1;
 extern void halt();
 void prg(){
     uint8_t str[]="Hello ";
     print_text(str);
     halt();
 }
+uint8_t lock=0;
+bool p=true;
+void ap_code(){
+    while(lock>0);
+    lock=1;
+    while(p);
+    print_text("AP");
+    ap_idt_init();
+    ap_lapic_init();
+    pc+=1;
+    lock=0;
+    while(1);
+}
 void kmain(){
     clear_screen();
     idt_init();
-    lapic_init();
     kb_init();
-    set_print_status(true);
-    pit_timer_init();
-    rtc_init();
-    calib_lapic_timer();
-    heap_init(0xB00000, 0xC00000);
+    heap_init(0xC00000, 0xCFFFFF);
     disk_init(0x10000, 0x100000);
     vmm_init(0xFFFFF);
     //filesystem_init(0x7C00);
     set_home_addr((uint32_t)prg);
+    lapic_init();
+    pit_timer_init();
+    rtc_init();
+    calib_lapic_timer();
     uint8_t string[]="Atharva ";
     uint8_t delim[]=",";
     print_text(string);
     uint32_t* k=(uint32_t*)get_syscall_buff();
+    lock=0;
+    p=false;
+    for(uint8_t i=1;i<num_cores;i++){
+        pc=0;
+        call_id=i;
+        while(pc==0);
+        sleep_ms(100);
+    }
     /*k[0]=22;
     uint8_t files[]="prg.c prg_aid.c ";
     k[1]=(uint32_t)&files[0];
@@ -58,10 +90,5 @@ void kmain(){
     pcb->pstat=2;
     exec_prg(pcb->entry_addr, pcb->esp);
     pcb->pstat=0;*/
-    /*uint8_t* ptr=(uint8_t*)0xb8000;
-    uint8_t* ebda=(uint8_t*)0x400;
-    for(uint16_t i=0,j=0;j<0x1000;i++,j+=2){
-        ptr[j]=ebda[i];
-    }*/
     halt();
 }

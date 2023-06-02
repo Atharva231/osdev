@@ -12,6 +12,7 @@ global disable_interrupts
 global keyboard_handler
 global page_fault_handler
 global pause_handler
+global ap_task_handler
 global port_word_in
 global port_word_out
 global port_dword_in
@@ -28,6 +29,7 @@ global set_msr
 [extern system_call_task]
 [extern page_fault_task]
 [extern pause]
+[extern ap_task]
 [extern print_num]
 port_byte_in:
 	mov edx, [esp + 4]
@@ -159,6 +161,15 @@ pause_handler:
     cld
     call pause
     mov dword [0xFEE000B0], 0x00
+    popad
+    iretd
+
+ap_task_handler:
+    pushad
+    cld
+    call ap_task
+    mov dword [0xFEE000B0], 0x00
+    call eax
     popad
     iretd
 

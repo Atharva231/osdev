@@ -50,6 +50,7 @@ dataseg equ gdt_datadesc - gdt_nulldesc
 
 [bits 32]
 set_ap:
+
     mov eax, 0x0
     mov ax, WORD [counter]
     .try:
@@ -58,6 +59,8 @@ set_ap:
         lock cmpxchg WORD [counter], bx
     jnz .try
     mov cx, ax            ;Save this unique id
+
+    ;set_stack  
     mov ebx, 0x10000
     mul ebx
     mov ebx, 0x90000
@@ -65,6 +68,7 @@ set_ap:
     mov ebp, ebx
     mov esp, ebp
 
+    ;print 'AP-'
     mov eax, ecx
     mov ebx, 160d
     mul ebx
@@ -76,10 +80,29 @@ set_ap:
     mov [edi + 4], byte '-'
     mov eax, 0x06
     add edi, eax
-    mov eax, ecx
+
+    ;get initial apic id
+    push ecx
+    mov eax, 0x01
+    cpuid
+    mov eax, ebx
+    shr eax, 24
+
+    ;enter apic in apic id list
+    mov ebx, apic_id_list
+    pop ecx
+    push ecx
+    push eax
+    mov eax, 0x04
+    mul ecx
+    add ebx, eax
+    pop eax
+    lock add [ebx], eax
+
+    ;print apic id
     call print_num
-    cli
-    hlt
+
+    jmp 0x9000
 
 print_num:
     mov edx, 0
@@ -94,7 +117,6 @@ print_num:
     jnz print_num
     ret
 
-counter dw 1
-digits db "0123456789abcdef"
-times 510-($-$$) db 0
-dw 0xAA55
+counter             dw 1
+digits              db "0123456789abcdef"
+apic_id_list        dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0

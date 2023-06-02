@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 static uint8_t prev_key=0;
-static bool print_status=false;
+static bool print_status=true;
 uint8_t* key_buff;
 void kb_init()
 {

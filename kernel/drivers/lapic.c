@@ -51,20 +51,15 @@ uint32_t check_apic(void)
 uint32_t get_apic_id(){
     uint32_t ebx, edx, unused;
     __get_cpuid(1, &unused, &ebx, &unused, &edx);
-    return ebx>>16;
+    return ebx>>24;
 }
-void send_IPI(uint32_t *data){
-    uint32_t icr_lo=0;
-    uint32_t icr_hi=0;
-    icr_lo |= INTR_VECTOR(data[0]) | DELMOD(data[1]) | DESTMOD(data[2]);
-    icr_lo |= LEVEL(data[3]) | TRIGGER_MODE(data[4]) | DEST_SHORTHAND(data[5]);
-    icr_hi = DEST_FIELD(data[6]);
-    lapic_addr[ICR_HIGH/4]=icr_hi;
-    lapic_addr[ICR_LOW/4]=icr_lo;
+void send_IPI(uint32_t lapic_id, uint32_t vector){
+    lapic_addr[ICR_HIGH/4]=0xFF000000 & (lapic_id<<24);
+    lapic_addr[ICR_LOW/4]=0x00004020;
 }
 void self_intr(uint32_t vector){
     uint32_t icr_lo=0;
-    uint32_t icr_hi=0;
+    lapic_addr[ICR_HIGH/4]=0x00000000;
     icr_lo |= INTR_VECTOR(vector) | DELMOD(0x00) | DESTMOD(0x00);
     icr_lo |= LEVEL(0x01) | TRIGGER_MODE(0x00) | DEST_SHORTHAND(0x01);
     lapic_addr[ICR_LOW/4]=icr_lo;
@@ -103,7 +98,7 @@ void set_apic_timer(uint32_t* data){
     lapic_addr[INITIAL_COUNT_REG/4] = data[3];
 }
 void timer_task(void){
-    timer_calib=*((uint32_t*)0xFEE00390);
+    print_num_hex(timer_calib);
 }
 uint32_t calib_lapic_timer(){
     uint32_t data[]={0x20, 0x00, 1, 0xFFFFFFFF};
@@ -160,12 +155,7 @@ void lapic_init(){
     set_msr(0x1B, msr);
     
     /* enable spurious interrupt in lapic */
-	lapic_addr[SIVR/4]=0xFF;
-    
-	/* set IMCR */
-	port_byte_out(0x22, 0x70);
-	uint8_t imcr=port_byte_in(0x23) | 0x01;
-	port_byte_out(0x23, imcr);
+	*((uint32_t*)0xFEE000F0)=0x1FF;
 
     /* set keyboard interrupt */
     uint32_t data[7];
@@ -197,4 +187,16 @@ void lapic_init(){
     data[5]=0x01;
     data[6]=0x00;
     set_ioapic_redtbl(0x08, data);
+}
+
+void ap_lapic_init(){
+
+    /* enable lapic using msr */
+    uint32_t msr[2];
+    get_msr(0x1B, msr);
+    msr[0] |= 0x900;
+    set_msr(0x1B, msr);   
+    
+    /* enable spurious interrupt in lapic */
+	*((uint32_t*)0xFEE000F0)=0x1FF;
 }
