@@ -178,6 +178,9 @@ void system_call_task(){
         read_date(syscall_buff);
         temp=syscall_buff[0];
         break;
+    case 25:
+        print_text("syscall");
+        break;
         
     default:
         break;

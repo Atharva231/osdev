@@ -54,8 +54,8 @@ uint32_t get_apic_id(){
     return ebx>>24;
 }
 void send_IPI(uint32_t lapic_id, uint32_t vector){
-    lapic_addr[ICR_HIGH/4]=0xFF000000 & (lapic_id<<24);
-    lapic_addr[ICR_LOW/4]=0x00004020;
+    lapic_addr[ICR_HIGH/4]=(lapic_id<<24);
+    lapic_addr[ICR_LOW/4]=(0x00004000|vector);
 }
 void self_intr(uint32_t vector){
     uint32_t icr_lo=0;

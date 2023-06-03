@@ -37,25 +37,22 @@ void start(){
 #include <stdbool.h>
 
 extern uint32_t exec_prg(uint32_t addr, uint32_t base_ptr);
-uint8_t pc=1;
 extern void halt();
 void prg(){
     uint8_t str[]="Hello ";
     print_text(str);
     halt();
 }
-uint8_t lock=0;
-bool p=true;
-void ap_code(){
-    while(lock>0);
-    lock=1;
-    while(p);
-    print_text("AP");
-    ap_idt_init();
-    ap_lapic_init();
-    pc+=1;
-    lock=0;
-    while(1);
+void test_func(){
+    uint32_t* k=(uint32_t*)get_syscall_buff();
+    k[0]=22;
+    uint8_t files[]="prg.c prg_aid.c ";
+    k[1]=(uint32_t)&files[0];
+    self_intr(0x80);
+    struct Process_Control_Block* pcb=(struct Process_Control_Block*)k[0];
+    pcb->pstat=2;
+    exec_prg(pcb->entry_addr, pcb->esp);
+    pcb->pstat=0;
 }
 void kmain(){
     clear_screen();
@@ -64,31 +61,27 @@ void kmain(){
     heap_init(0xC00000, 0xCFFFFF);
     disk_init(0x10000, 0x100000);
     vmm_init(0xFFFFF);
-    //filesystem_init(0x7C00);
+    filesystem_init(0x9800);
     set_home_addr((uint32_t)prg);
     lapic_init();
     pit_timer_init();
     rtc_init();
     calib_lapic_timer();
+    init_ap();
     uint8_t string[]="Atharva ";
     uint8_t delim[]=",";
     print_text(string);
-    uint32_t* k=(uint32_t*)get_syscall_buff();
-    lock=0;
-    p=false;
-    for(uint8_t i=1;i<num_cores;i++){
-        pc=0;
-        call_id=i;
-        while(pc==0);
-        sleep_ms(100);
-    }
-    /*k[0]=22;
+    /*uint32_t* k=(uint32_t*)get_syscall_buff();
+    k[0]=22;
     uint8_t files[]="prg.c prg_aid.c ";
     k[1]=(uint32_t)&files[0];
-    asm("int $0x80");
+    self_intr(0x80);
     struct Process_Control_Block* pcb=(struct Process_Control_Block*)k[0];
     pcb->pstat=2;
     exec_prg(pcb->entry_addr, pcb->esp);
     pcb->pstat=0;*/
-    halt();
+    set_ap_task((uint32_t)test_func, 0x01);
+    while(1){
+        asm("hlt");
+    }
 }

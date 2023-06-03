@@ -167,9 +167,8 @@ pause_handler:
 ap_task_handler:
     pushad
     cld
-    call ap_task
+    mov dword [esp + 32], ap_task
     mov dword [0xFEE000B0], 0x00
-    call eax
     popad
     iretd
 
