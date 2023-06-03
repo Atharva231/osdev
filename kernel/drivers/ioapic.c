@@ -46,6 +46,7 @@ void change_io_vector(uint8_t vector, uint32_t offset){
     *iowin |= (vector & 0xFF);
 }
 void set_ioapic_redtbl(uint32_t offset, uint32_t *data){
+    asm("cli");
     uint32_t redtbl_lo=0;
     uint32_t redtbl_hi=0;
     redtbl_lo |= INTR_VECTOR(data[0]) | DELMOD(data[1]) | DESTMOD(data[2]);
@@ -55,4 +56,5 @@ void set_ioapic_redtbl(uint32_t offset, uint32_t *data){
     *iowin=redtbl_lo;
     *ioregsel=IOREDTBL+offset+1;
     *iowin=redtbl_hi;
+    asm("sti");
 }

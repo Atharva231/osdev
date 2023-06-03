@@ -109,6 +109,13 @@ void ap_idt_init(){
 	ap_idt[0x20].type_attr = 0x8E; /* INTERRUPT_GATE */
 	ap_idt[0x20].offset_higherbits = (func_addr & 0xffff0000) >> 16;
 
+	func_addr = (uint32_t)pause_handler;
+	IDT_entry[0x39].offset_lowerbits = func_addr & 0xffff;
+	IDT_entry[0x39].selector = 0x08; /* KERNEL_CODE_SEGMENT_OFFSET */
+	IDT_entry[0x39].zero = 0;
+	IDT_entry[0x39].type_attr = 0x8E; /* INTERRUPT_GATE */
+	IDT_entry[0x39].offset_higherbits = (func_addr & 0xffff0000) >> 16;
+
 	func_addr = (uint32_t)system_call_handler;
 	ap_idt[0x80].offset_lowerbits = func_addr & 0xffff;
 	ap_idt[0x80].selector = 0x08; /* KERNEL_CODE_SEGMENT_OFFSET */

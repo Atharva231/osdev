@@ -20,13 +20,14 @@ uint32_t get_thread_per_core(){
     return ebx & 0xFFFF;
 }
 
-void ap_code(){
+void ap_init_code(){
     while(lock>0);
     lock=1;
     print_text("AP");
     ap_idt_init();
     ap_lapic_init();
-    *((uint32_t*)0xFEE000B0)=0;
+    send_EOI();
+    ap_vmm_init();
     pc+=1;
     lock=0;
     while(1){

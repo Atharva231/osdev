@@ -26,8 +26,6 @@ void update_disk_table(){
     uint32_t addr = disk_start_addr;
     write_sectors(addr, (FST_SIZE*4*2)/512, (uint16_t*)fst);
     addr+=(FST_SIZE*4*2)/512;
-    /*write_sectors(addr, (SAT_SIZE*4*2)/512, (uint16_t*)sat);
-    addr+=(SAT_SIZE*4*2)/512;*/
 }
 
 uint32_t sector_alloc(uint32_t sector_count){

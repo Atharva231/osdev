@@ -114,7 +114,7 @@ uint32_t calib_lapic_timer(){
     while(ps==rtc[0]){
         read_time(rtc);
     }
-    timer_calib=*((uint32_t*)0xFEE00390);
+    timer_calib=lapic_addr[CCR/4];
     lapic_addr[LVT_TR/4] |= 0x10000;
     timer_calib = 0xFFFFFFFF-timer_calib;
     return timer_calib;
@@ -142,20 +142,23 @@ void sleep_us(uint32_t time){
     set_apic_timer(data);
     while (sleep_flag);
 }
-void lapic_init(){
 
+void send_EOI(){
+    lapic_addr[EOI_REG/4]=0;
+}
+
+void lapic_init(){
+    uint32_t msr[2];
+    get_msr(0x1B, msr);
+    lapic_addr=(uint32_t*)(msr[0]&0xFFFFF000);
     /* mask 8259 pic interrupts */
 	port_byte_out(0x21 , 0xff);
 	port_byte_out(0xA1 , 0xff);
 
     /* enable lapic using msr */
-    uint32_t msr[2];
     get_msr(0x1B, msr);
     msr[0] |= 0x900;
     set_msr(0x1B, msr);
-    
-    /* enable spurious interrupt in lapic */
-	*((uint32_t*)0xFEE000F0)=0x1FF;
 
     /* set keyboard interrupt */
     uint32_t data[7];
@@ -187,6 +190,9 @@ void lapic_init(){
     data[5]=0x01;
     data[6]=0x00;
     set_ioapic_redtbl(0x08, data);
+    
+    /* enable spurious interrupt in lapic */
+	lapic_addr[SIVR/4]=0x1FF;
 }
 
 void ap_lapic_init(){
@@ -198,5 +204,5 @@ void ap_lapic_init(){
     set_msr(0x1B, msr);   
     
     /* enable spurious interrupt in lapic */
-	*((uint32_t*)0xFEE000F0)=0x1FF;
+	lapic_addr[SIVR/4]=0x1FF;
 }

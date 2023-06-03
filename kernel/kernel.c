@@ -1,5 +1,5 @@
 void kmain();
-void ap_code();
+void ap_init_code();
 char call_id=0;
 char num_cores=1;
 void start(){
@@ -11,7 +11,7 @@ void start(){
     else{
         ++num_cores;
         while(call_id!=id);
-        ap_code();
+        ap_init_code();
     }
 }
 #include "./mgmt/heap.c"
@@ -22,7 +22,6 @@ void start(){
 #include "./drivers/pci.c"
 #include "./drivers/rtc.c"
 #include "./drivers/acpi.c"
-#include "./drivers/mp_config.c"
 #include "./drivers/ioapic.c"
 #include "./drivers/lapic.c"
 #include "./mgmt/disk_mgmt.c"
@@ -44,15 +43,9 @@ void prg(){
     halt();
 }
 void test_func(){
-    uint32_t* k=(uint32_t*)get_syscall_buff();
-    k[0]=22;
-    uint8_t files[]="prg.c prg_aid.c ";
-    k[1]=(uint32_t)&files[0];
-    self_intr(0x80);
-    struct Process_Control_Block* pcb=(struct Process_Control_Block*)k[0];
-    pcb->pstat=2;
-    exec_prg(pcb->entry_addr, pcb->esp);
-    pcb->pstat=0;
+    uint32_t cr;
+    asm("mov %%cr3, %0":"=r"(cr));
+    print_num_hex(cr);
 }
 void kmain(){
     clear_screen();
@@ -61,7 +54,7 @@ void kmain(){
     heap_init(0xC00000, 0xCFFFFF);
     disk_init(0x10000, 0x100000);
     vmm_init(0xFFFFF);
-    filesystem_init(0x9800);
+    //filesystem_init(0x9800);
     set_home_addr((uint32_t)prg);
     lapic_init();
     pit_timer_init();
@@ -80,7 +73,7 @@ void kmain(){
     pcb->pstat=2;
     exec_prg(pcb->entry_addr, pcb->esp);
     pcb->pstat=0;*/
-    set_ap_task((uint32_t)test_func, 0x01);
+
     while(1){
         asm("hlt");
     }

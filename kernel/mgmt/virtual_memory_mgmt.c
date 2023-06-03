@@ -94,6 +94,12 @@ void vmm_init(uint32_t limit){
     enable_PSE();
 }
 
+void ap_vmm_init(){
+    loadPageDirectory(page_directory);
+    enablePaging();
+    enable_PSE();
+}
+
 uint32_t alloc_pages(uint32_t size){
     if(size%0x1000!=0){
         size=size/0x1000+1;
