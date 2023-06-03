@@ -39,8 +39,6 @@
 uint32_t* lapic_addr=(uint32_t*)0xFEE00000;
 uint32_t timer_calib=0;
 bool sleep_flag;
-extern void get_msr(uint32_t code, uint32_t* data);
-extern void set_msr(uint32_t code, uint32_t* data);
 
 uint32_t check_apic(void)
 {

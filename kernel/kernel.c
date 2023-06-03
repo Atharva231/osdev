@@ -1,9 +1,13 @@
 void kmain();
 void ap_init_code();
+extern void get_msr(int code, int* data);
+extern void set_msr(int code, int* data);
 char call_id=0;
 char num_cores=1;
 void start(){
-    int id=*((int*)0xFEE00020);
+    int msr[2];
+    get_msr(0x1B, msr);
+    int id=*((int*)((msr[0]&0xFFFFF000)|0x20));
     id = id>>24;
     if(id==0){
         kmain();
