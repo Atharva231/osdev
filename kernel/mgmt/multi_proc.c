@@ -8,10 +8,10 @@ void set_ap_task(uint32_t func_addr, uint8_t dest_lapic_id){
     ap_task_addr=func_addr;
     send_IPI(dest_lapic_id, 0x20);
 }
-uint32_t get_numcores(){
+uint32_t get_numapics(){
     uint32_t ebx=0, unused;
-    __get_cpuid_count(0x0B, 0x01, &unused, &ebx, &unused, &unused);
-    return ebx & 0xFFFF;
+    __get_cpuid(0x01, &unused, &ebx, &unused, &unused);
+    return (ebx>>16) & 0xFF;
 }
 
 uint32_t get_thread_per_core(){
@@ -37,11 +37,12 @@ void ap_init_code(){
 
 void init_ap(){
     lock=0;
-    for(uint8_t i=1;i<num_cores;i++){
+    uint8_t procs=get_numapics();
+    for(uint8_t i=1;i<procs;i++){
         pc=0;
         call_id=i;
         while(pc==0);
-        sleep_ms(100);
+        sleep_us(50);
     }
 }
 uint32_t ap_task(){

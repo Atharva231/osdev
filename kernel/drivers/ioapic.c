@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 #define IOAPICID 0x00
 #define IOAPICVER 0x01
 #define IOAPICARB 0x02
@@ -13,6 +14,7 @@
 
 uint32_t* ioregsel=(uint32_t*)0xFEC00000;
 uint32_t* iowin=(uint32_t*)0xFEC00010;
+bool lock_ioapic=false;
 uint32_t get_ioapic_id(){
     *ioregsel=IOAPICID;
     return *iowin;
@@ -46,6 +48,8 @@ void change_io_vector(uint8_t vector, uint32_t offset){
     *iowin |= (vector & 0xFF);
 }
 void set_ioapic_redtbl(uint32_t offset, uint32_t *data){
+    while(lock_ioapic);
+    lock_ioapic=true;
     asm("cli");
     uint32_t redtbl_lo=0;
     uint32_t redtbl_hi=0;
@@ -56,5 +60,40 @@ void set_ioapic_redtbl(uint32_t offset, uint32_t *data){
     *iowin=redtbl_lo;
     *ioregsel=IOREDTBL+offset+1;
     *iowin=redtbl_hi;
+    lock_ioapic=false;
     asm("sti");
+}
+
+void ioapic_init(){
+    lock_ioapic=false;
+    /* set keyboard interrupt */
+    uint32_t data[7];
+    data[0]=0x21;
+    data[1]=0x00;
+    data[2]=0x00;
+    data[3]=0x01;
+    data[4]=0x00;
+    data[5]=0x00;
+    data[6]=0x00;
+    set_ioapic_redtbl(0x02, data);
+	
+    /* set and mask 8254 timer interrupt */
+    data[0]=0x39;
+    data[1]=0x00;
+    data[2]=0x00;
+    data[3]=0x01;
+    data[4]=0x00;
+    data[5]=0x01;
+    data[6]=0x00;
+    set_ioapic_redtbl(0x04, data);
+
+    /* set rtc interrupt */
+    data[0]=0x20;
+    data[1]=0x00;
+    data[2]=0x00;
+    data[3]=0x01;
+    data[4]=0x00;
+    data[5]=0x01;
+    data[6]=0x00;
+    set_ioapic_redtbl(0x08, data);
 }

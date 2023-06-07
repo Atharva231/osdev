@@ -77,7 +77,6 @@ void kmain(){
     pcb->pstat=2;
     exec_prg(pcb->entry_addr, pcb->esp);
     pcb->pstat=0;*/
-
     while(1){
         asm("hlt");
     }

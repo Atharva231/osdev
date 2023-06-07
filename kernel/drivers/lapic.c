@@ -38,6 +38,7 @@
 
 uint32_t* lapic_addr=(uint32_t*)0xFEE00000;
 uint32_t timer_calib=0;
+bool lock_lapic=false;
 bool sleep_flag;
 
 uint32_t check_apic(void)
@@ -52,8 +53,11 @@ uint32_t get_apic_id(){
     return ebx>>24;
 }
 void send_IPI(uint32_t lapic_id, uint32_t vector){
+    while(lock_lapic);
+    lock_lapic=true;
     lapic_addr[ICR_HIGH/4]=(lapic_id<<24);
     lapic_addr[ICR_LOW/4]=(0x00004000|vector);
+    lock_lapic=false;
 }
 void self_intr(uint32_t vector){
     uint32_t icr_lo=0;
@@ -89,11 +93,14 @@ void pause(){
     sleep_flag=false;
 }
 void set_apic_timer(uint32_t* data){
+    while(lock_lapic);
+    lock_lapic=true;
     uint32_t t = data[0] & 0xFF;
     t |= ((data[1]<<17) & 0x60000);
     lapic_addr[DCR/4] = (div_val(data[2] & 0xF) & 0xF);
     lapic_addr[LVT_TR/4] = t;
     lapic_addr[INITIAL_COUNT_REG/4] = data[3];
+    lock_lapic=false;
 }
 void timer_task(void){
     print_num_hex(timer_calib);
@@ -142,10 +149,14 @@ void sleep_us(uint32_t time){
 }
 
 void send_EOI(){
+    while(lock_lapic);
+    lock_lapic=true;
     lapic_addr[EOI_REG/4]=0;
+    lock_lapic=false;
 }
 
 void lapic_init(){
+    lock_lapic=false;
     uint32_t msr[2];
     get_msr(0x1B, msr);
     lapic_addr=(uint32_t*)(msr[0]&0xFFFFF000);
@@ -157,44 +168,14 @@ void lapic_init(){
     get_msr(0x1B, msr);
     msr[0] |= 0x900;
     set_msr(0x1B, msr);
-
-    /* set keyboard interrupt */
-    uint32_t data[7];
-    data[0]=0x21;
-    data[1]=0x00;
-    data[2]=0x00;
-    data[3]=0x01;
-    data[4]=0x00;
-    data[5]=0x00;
-    data[6]=0x00;
-    set_ioapic_redtbl(0x02, data);
-	
-    /* set and mask 8254 timer interrupt */
-    data[0]=0x39;
-    data[1]=0x00;
-    data[2]=0x00;
-    data[3]=0x01;
-    data[4]=0x00;
-    data[5]=0x01;
-    data[6]=0x00;
-    set_ioapic_redtbl(0x04, data);
-
-    /* set rtc interrupt */
-    data[0]=0x20;
-    data[1]=0x00;
-    data[2]=0x00;
-    data[3]=0x01;
-    data[4]=0x00;
-    data[5]=0x01;
-    data[6]=0x00;
-    set_ioapic_redtbl(0x08, data);
-    
+    ioapic_init();
     /* enable spurious interrupt in lapic */
 	lapic_addr[SIVR/4]=0x1FF;
 }
 
 void ap_lapic_init(){
-
+    while(lock_lapic);
+    lock_lapic=true;
     /* enable lapic using msr */
     uint32_t msr[2];
     get_msr(0x1B, msr);
@@ -203,4 +184,5 @@ void ap_lapic_init(){
     
     /* enable spurious interrupt in lapic */
 	lapic_addr[SIVR/4]=0x1FF;
+    lock_lapic=false;
 }
