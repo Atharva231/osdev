@@ -27,7 +27,6 @@ static void ATA_wait_BSY();
 static void ATA_wait_DRQ();
 void read_sectors(uint16_t *target, uint32_t LBA, uint8_t sector_count)
 {
-
 	ATA_wait_BSY();
 	port_byte_out(0x1F6,0xE0 | ((LBA >>24) & 0xF));
 	port_byte_out(0x1F2,sector_count);
@@ -35,8 +34,6 @@ void read_sectors(uint16_t *target, uint32_t LBA, uint8_t sector_count)
 	port_byte_out(0x1F4, (uint8_t)(LBA >> 8));
 	port_byte_out(0x1F5, (uint8_t)(LBA >> 16)); 
 	port_byte_out(0x1F7,0x20); //Send the read command
-
-	//uint16_t *target = (uint16_t*) target_address;
 
 	for (int j =0;j<sector_count;j++)
 	{

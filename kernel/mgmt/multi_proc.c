@@ -14,12 +14,6 @@ uint32_t get_numapics(){
     return (ebx>>16) & 0xFF;
 }
 
-uint32_t get_thread_per_core(){
-    uint32_t ebx=0, unused;
-    __get_cpuid_count(0x0B, 0x00, &unused, &ebx, &unused, &unused);
-    return ebx & 0xFFFF;
-}
-
 void ap_init_code(){
     while(lock>0);
     lock=1;
@@ -40,7 +34,7 @@ void init_ap(){
     uint8_t procs=get_numapics();
     for(uint8_t i=1;i<procs;i++){
         pc=0;
-        call_id=i;
+        set_call_id(i);
         while(pc==0);
         sleep_us(50);
     }
@@ -54,3 +48,4 @@ uint32_t ap_task(){
         asm("hlt");
     }
 }
+

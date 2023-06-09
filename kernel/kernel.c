@@ -1,9 +1,10 @@
 void kmain();
 void ap_init_code();
+void set_call_id(char);
 extern void get_msr(int code, int* data);
 extern void set_msr(int code, int* data);
 char call_id=0;
-char num_cores=1;
+
 void start(){
     int msr[2];
     get_msr(0x1B, msr);
@@ -13,10 +14,13 @@ void start(){
         kmain();
     }
     else{
-        ++num_cores;
         while(call_id!=id);
         ap_init_code();
     }
+}
+
+void set_call_id(char a){
+    call_id=a;
 }
 #include "./mgmt/heap.c"
 #include "./drivers/screen.c"
@@ -47,9 +51,8 @@ void prg(){
     halt();
 }
 void test_func(){
-    uint32_t cr;
-    asm("mov %%cr3, %0":"=r"(cr));
-    print_num_hex(cr);
+    sleep_s(1);
+    print_text("Lapic timer test");
 }
 void kmain(){
     clear_screen();
@@ -77,6 +80,7 @@ void kmain(){
     pcb->pstat=2;
     exec_prg(pcb->entry_addr, pcb->esp);
     pcb->pstat=0;*/
+    set_ap_task((uint32_t)test_func, 0x01);
     while(1){
         asm("hlt");
     }
