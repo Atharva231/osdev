@@ -12,7 +12,7 @@ static uint32_t page_table[1024*1024] __attribute__((aligned(4096)));
 static uint32_t page_location[1024*1024] __attribute__((aligned(4096)));
 static uint32_t physmem_limit;
 static uint8_t ovf=0;
-static uint32_t kernel_space=0xD00;
+static uint32_t kernel_space=0xE00;
 static uint32_t* physmem_table;
 
 void refresh_tlb(){
@@ -76,7 +76,7 @@ void vmm_init(uint32_t limit){
     }
     physmem_table=(uint32_t*)mem_alloc(size);
     page_alloc_init(kernel_space);
-    physmem_alloc_init(kernel_space, physmem_limit, (uint32_t)&physmem_table[ovf*FPHT_SIZE*2]);
+    physmem_alloc_init(kernel_space);
     for(uint16_t i = 0; i < 1024; i++)
     {
         page_directory[i] = ((uint32_t)&page_table[i*1024]) | 2;
@@ -108,7 +108,7 @@ uint32_t alloc_pages(uint32_t size){
         size/=0x1000;
     }
     uint32_t page=0, virtualaddr, physaddr;
-    for(uint32_t i=0;i<size;i++){
+    /*for(uint32_t i=0;i<size;i++){
         virtualaddr=page_alloc(1)*0x1000;
         physaddr=physmem_alloc(1)*0x1000;
         if(physaddr==0){
@@ -122,8 +122,13 @@ uint32_t alloc_pages(uint32_t size){
             page=virtualaddr;
         }
         map_page(virtualaddr, physaddr, 0x3);
+    }*/
+    virtualaddr=page_alloc(size)*0x1000;
+    physaddr=physmem_alloc(size)*0x1000;
+    for(uint32_t i=0;i<size;i++){
+        map_page((virtualaddr + i*0x1000), (physaddr + i*0x1000), 0x3);
     }
-    return page;
+    return virtualaddr;
 }
 
 void unalloc_pages(uint32_t virtualaddr, uint32_t size){
@@ -135,13 +140,13 @@ void unalloc_pages(uint32_t virtualaddr, uint32_t size){
     }
     uint32_t physaddr=0, temp;
     for(uint32_t i=0;i<size;i++){
-        physaddr=unmap_page(virtualaddr);
-        free_page((virtualaddr/0x1000), 1);
+        physaddr=unmap_page(virtualaddr + i*0x1000);
+        free_page(((virtualaddr + i*0x1000)/0x1000), 1);
         temp=free_physmem((physaddr/0x1000), 1);
-        if(ovf>0 && temp==kernel_space){
+        /*if(ovf>0 && temp==kernel_space){
             ovf-=1;
             physmem_alloc_init(kernel_space, physmem_limit, (uint32_t)&physmem_table[ovf*FPHT_SIZE*2]);
-        }
+        }*/
     }
 }
 void page_fault_task(uint32_t error_code){
@@ -151,7 +156,7 @@ void page_fault_task(uint32_t error_code){
     print_num(error_code&0XF);
     print_text(space);
     uint32_t page=read_cr2();
-    print_num(page);
+    print_num_hex(page);
     page=page>>12;
     page*=0x1000;
     if(ovf>0){

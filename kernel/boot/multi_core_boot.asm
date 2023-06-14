@@ -15,7 +15,7 @@ call disk_load
 
 mov ebx, KERNEL_OFFSET
 mov dl, [BOOT_DRIVE]
-mov dh, 0x02
+mov dh, 0x03
 mov cl , 0x03
 call disk_load
 call switch_to_pm

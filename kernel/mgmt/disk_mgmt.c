@@ -1,11 +1,12 @@
 #define SAT_SIZE 256
 #define FST_SIZE 256
 #include <stdint.h>
-
+#include <stdbool.h>
 static uint32_t fst[FST_SIZE][2];
 static uint32_t lowest_free_record_fst, disk_start_addr;
-
+bool lock_disk;
 uint32_t disk_init(uint32_t addr, uint32_t limit){
+    lock_disk=false;
     disk_start_addr = addr;
     /*read_sectors((uint16_t*)fst, addr, (FST_SIZE*4*2)/512);
     addr+=(FST_SIZE*4*2)/512;
@@ -29,6 +30,8 @@ void update_disk_table(){
 }
 
 uint32_t sector_alloc(uint32_t sector_count){
+    while(lock_disk);
+    lock_disk=true;
     uint32_t sector_start=0, t;
     uint16_t i;
 
@@ -46,10 +49,13 @@ uint32_t sector_alloc(uint32_t sector_count){
             }
         }
     }
+    lock_disk=false;
     return sector_start;
 }
 
 uint32_t free_sector(uint32_t addr, uint32_t num_sectors){
+    while(lock_disk);
+    lock_disk=true;
     uint32_t resp=1;
     uint16_t i=0,f=SAT_SIZE,r=SAT_SIZE,j=0;
     while((f==SAT_SIZE || r==SAT_SIZE)&&j<FST_SIZE){
@@ -113,5 +119,6 @@ uint32_t free_sector(uint32_t addr, uint32_t num_sectors){
             }
         }
     }
+    lock_disk=false;
     return fst[0][1];
 }

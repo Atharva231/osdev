@@ -47,6 +47,7 @@ uint32_t check_apic(void)
     __get_cpuid(1, &eax, &unused, &unused, &edx);
     return edx & (1 << 9);
 }
+
 uint32_t get_apic_id(){
     uint32_t ebx, edx, unused;
     __get_cpuid(1, &unused, &ebx, &unused, &edx);

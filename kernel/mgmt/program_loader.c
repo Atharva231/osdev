@@ -32,8 +32,9 @@ uint32_t get_heap_size(uint32_t files, uint32_t file_num){
     Elf32_Sym* sym_entry=0;
     Elf32_Rel* rel_entry=0;
     elf_hdr=(Elf32_Ehdr*)addr;
-    if(elf_hdr->e_ident[1]!='E' || elf_hdr->e_ident[2]!='L' || elf_hdr->e_ident[3]!='F')
+    if(elf_hdr->e_ident[1]!='E' || elf_hdr->e_ident[2]!='L' || elf_hdr->e_ident[3]!='F'){
         return 0;
+    }
     else if(elf_hdr->e_type!=1)
         return 1;
     uint32_t c=0,sym_type,temp;
@@ -79,7 +80,7 @@ uint32_t get_heap_size(uint32_t files, uint32_t file_num){
     if(c==0||reloc_sec==0)
        return 2;
     c=0;
-    for(uint8_t i=0;i<(reloc_sec->sh_size)/(reloc_sec->sh_entsize);i++){
+    /*for(uint8_t i=0;i<(reloc_sec->sh_size)/(reloc_sec->sh_entsize);i++){
        rel_entry=(Elf32_Rel*)(addr+reloc_sec->sh_offset+(i*8));
        sym_type=rel_entry->r_info&0xFF;
        sym_addr=(rel_entry->r_info>>8);
@@ -88,8 +89,11 @@ uint32_t get_heap_size(uint32_t files, uint32_t file_num){
         if(sym_entry->st_shndx==0xfff2){
             c+=sym_entry->st_size;
         }
+       print_num_hex(sym_entry->st_shndx);
+       print_text((uint8_t*)(addr+strtab_sec->sh_offset+sym_entry->st_name));
        }
-    }
+    }*/
+    c+=bss_sec->sh_size;
     return c+get_heap_size(files, file_num+1);
 }
 uint32_t find_symbol(uint32_t addr, uint8_t* symbol){

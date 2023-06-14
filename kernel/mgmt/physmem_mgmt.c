@@ -2,20 +2,16 @@
 #define PHAT_SIZE 512
 #include <stdint.h>
 
-static uint32_t** fpht;
+static uint32_t fpht[FPHT_SIZE][2];
 static uint32_t lowest_free_record_fpht;
 
-void physmem_alloc_init(uint32_t start, uint32_t limit, uint32_t fpht_addr){
-    fpht=(uint32_t**)fpht_addr;
-    for(uint16_t i=0;i<256;i++){
-        fpht[i]=(uint32_t*)(fpht_addr+i*8);
-    }
+void physmem_alloc_init(uint32_t start){
     for(uint16_t i=0;i<FPHT_SIZE;i++){
         fpht[i][0]=0;
         fpht[i][1]=0;
     }
     fpht[0][0] = start;
-    fpht[0][1] = limit;
+    fpht[0][1] = 0xFFFFFFFF;
     lowest_free_record_fpht = 1;
 }
 

@@ -1,4 +1,5 @@
 #include<stdint.h>
+#include<stdbool.h>
 extern uint8_t port_byte_in(uint16_t port);
 extern void port_byte_out(uint16_t port, uint8_t data);
 extern uint16_t port_word_in(uint16_t port);
@@ -25,8 +26,20 @@ ERR: a 1 indicates that an error occured. An error code has been placed in the e
 //Source - OsDev wiki
 static void ATA_wait_BSY();
 static void ATA_wait_DRQ();
+bool lock_atapio=false;
+bool inside_kernel=true;
+void atapio_init(bool ik){
+	lock_atapio=false;
+	inside_kernel=ik;
+}
+
 void read_sectors(uint16_t *target, uint32_t LBA, uint8_t sector_count)
 {
+	while(lock_atapio);
+	lock_atapio=true;
+	if(inside_kernel){
+		asm("cli");
+	}
 	ATA_wait_BSY();
 	port_byte_out(0x1F6,0xE0 | ((LBA >>24) & 0xF));
 	port_byte_out(0x1F2,sector_count);
@@ -43,10 +56,19 @@ void read_sectors(uint16_t *target, uint32_t LBA, uint8_t sector_count)
 			target[i] = port_word_in(0x1F0);
 		target+=256;
 	}
+	lock_atapio=false;
+	if(inside_kernel){
+		asm("sti");
+	}
 }
 
 void write_sectors(uint32_t LBA, uint8_t sector_count, uint16_t* bytes)
 {
+	while(lock_atapio);
+	lock_atapio=true;
+	if(inside_kernel){
+		asm("cli");
+	}
 	ATA_wait_BSY();
 	port_byte_out(0x1F6,0xE0 | ((LBA >>24) & 0xF));
 	port_byte_out(0x1F2,sector_count);
@@ -63,6 +85,10 @@ void write_sectors(uint32_t LBA, uint8_t sector_count, uint16_t* bytes)
 		{
 			port_word_out(0x1F0, bytes[i]);
 		}
+	}
+	lock_atapio=false;
+	if(inside_kernel){
+		asm("sti");
 	}
 }
 

@@ -12,6 +12,8 @@ resize "kernel.bin"
 resize "fat.bin"
 resize "./boot/jumper.bin"
 resize "./boot/ap_code.bin"
+resize "../test/prg.o"
+resize "../test/prg_aid.o"
 cat ./boot/multi_core_boot.bin ./boot/ap_code.bin ./boot/jumper.bin ./kernel.bin ./fat.bin ../test/prg.o ../test/prg_aid.o > ../os.bin
 cd ..
 dd if=os.bin of=os.img

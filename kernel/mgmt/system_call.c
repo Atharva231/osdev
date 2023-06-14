@@ -3,7 +3,10 @@
 #include <stdbool.h>
 static uint32_t syscall_buff[SYSCALL_BUFF_LEN];
 static struct Process_Control_Block* pcb_head=0;
-uint8_t syscall_lock=0;
+bool syscall_lock=false;
+void syscall_init(){
+    syscall_lock=false;
+}
 uint32_t* get_syscall_buff(){
 	return syscall_buff;
 }
@@ -11,8 +14,8 @@ struct Process_Control_Block* get_pcb_head(){
     return pcb_head;
 }
 void system_call_task(){
-    while(syscall_lock>0);
-    syscall_lock=1;
+    while(syscall_lock);
+    syscall_lock=true;
     uint8_t delim[]=",";
     uint32_t temp=0;
     bool temp_bool=false,f;
@@ -21,7 +24,7 @@ void system_call_task(){
     uint8_t* file_names=(uint8_t*)syscall_buff[1];
     uint8_t buff[FILE_NAME_LEN];
     uint32_t* files;
-    static struct Process_Control_Block* pcb_ptr=0;
+    struct Process_Control_Block* pcb_ptr=0;
     switch(syscall_buff[0]){
     case 1:
     	if(syscall_buff[1]==1)
@@ -147,9 +150,9 @@ void system_call_task(){
         }
         syscall_buff[1]=(uint32_t)files;
         syscall_buff[3]=get_heap_size(syscall_buff[1], 0);
-        syscall_buff[2]=alloc_pages(syscall_buff[3]+0x100000);
+        syscall_buff[2]=alloc_pages(syscall_buff[3]+0x10000);
         temp=load_link_elf(syscall_buff[1], 0, syscall_buff[2]);
-        syscall_buff[1]=(syscall_buff[2]+syscall_buff[3]+0x100000)-1;
+        syscall_buff[1]=(syscall_buff[2]+syscall_buff[3]+0x10000)-1;
         if(pcb_head==0){
             pcb_head=create_pcb_list();
             pcb_ptr=pcb_head;
@@ -166,19 +169,28 @@ void system_call_task(){
         *ptr=pcb_ptr->pid;
         pcb_ptr->esp=pcb_ptr->stack_start-4;
         pcb_ptr->entry_addr=temp;
+        pcb_ptr->apic_id=get_apic_id();
         temp=(uint32_t)pcb_ptr;
         break;
     
     case 23:
+        pcb_ptr=get_pcb(pcb_head, syscall_buff[1]);
+        if((uint32_t)pcb_ptr==1)
+            break;
+        unalloc_pages(pcb_ptr->bss_start, (pcb_ptr->stack_start - pcb_ptr->bss_start + 1));
+        remove_pcb_node(pcb_head, pcb_ptr);
+        break;
+
+    case 24:
         read_time(syscall_buff);
         temp=syscall_buff[0];
         break;
 
-    case 24:
+    case 25:
         read_date(syscall_buff);
         temp=syscall_buff[0];
         break;
-    case 25:
+    case 26:
         print_text("syscall");
         break;
         
@@ -186,5 +198,5 @@ void system_call_task(){
         break;
     }
     syscall_buff[0]=temp;
-    syscall_lock=0;
+    syscall_lock=false;
 }

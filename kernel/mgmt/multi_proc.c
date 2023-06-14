@@ -1,11 +1,19 @@
+#define PROC_LIST_LEN 16
+
 #include <stdint.h>
-uint32_t ap_task_addr;
+#include <stdbool.h>
+
+uint32_t ap_task_addr, task_id;
 uint8_t lock=0;
 uint8_t pc=0;
+uint32_t* proc_list;
 void ap_idt_init();
 
-void set_ap_task(uint32_t func_addr, uint8_t dest_lapic_id){
+void set_ap_task(uint32_t func_addr, uint32_t t_id, uint8_t dest_lapic_id){
+    while(pc);
+    pc=1;
     ap_task_addr=func_addr;
+    task_id=t_id;
     send_IPI(dest_lapic_id, 0x20);
 }
 uint32_t get_numapics(){
@@ -17,12 +25,12 @@ uint32_t get_numapics(){
 void ap_init_code(){
     while(lock>0);
     lock=1;
-    print_text("AP");
     ap_idt_init();
     ap_lapic_init();
     send_EOI();
     ap_vmm_init();
-    pc+=1;
+    pc=1;
+    print_text("AP");
     lock=0;
     while(1){
         asm("hlt");
@@ -38,14 +46,32 @@ void init_ap(){
         while(pc==0);
         sleep_us(50);
     }
+    proc_list=(uint32_t*)mem_alloc(PROC_LIST_LEN*procs);
+    pc=0;
 }
 uint32_t ap_task(){
     //uint8_t str[]="AP_TASK!!";
     //print_text(str);
+    uint32_t p_list_entry=(PROC_LIST_LEN*get_apic_id());
+    for(uint8_t i=0;i<PROC_LIST_LEN;i++){
+        if(proc_list[p_list_entry+i]==0){
+            proc_list[p_list_entry+i]=task_id;
+        }
+    }
     void(*func_ptr)(void)=(void*)ap_task_addr;
+    pc=0;
     (*func_ptr)();
     while(1){
         asm("hlt");
     }
-}
+}   
 
+void test_func(){
+    while(true){
+        while(lock);
+        lock=1;
+        sleep_s(1);
+        print_num_hex(1);
+        lock=0;
+    }
+}

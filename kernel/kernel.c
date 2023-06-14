@@ -50,37 +50,36 @@ void prg(){
     print_text(str);
     halt();
 }
-void test_func(){
-    sleep_s(1);
-    print_text("Lapic timer test");
-}
 void kmain(){
     clear_screen();
     idt_init();
     kb_init();
-    heap_init(0xC00000, 0xCFFFFF);
+    heap_init(0xC00000, 0xDFFFFF);
+    atapio_init(true);
     disk_init(0x10000, 0x100000);
     vmm_init(0xFFFFF);
-    //filesystem_init(0x9800);
+    filesystem_init(0x9400);
     set_home_addr((uint32_t)prg);
     lapic_init();
     pit_timer_init();
     rtc_init();
     calib_lapic_timer();
     init_ap();
-    uint8_t string[]="Atharva ";
-    uint8_t delim[]=",";
-    print_text(string);
-    /*uint32_t* k=(uint32_t*)get_syscall_buff();
-    k[0]=22;
+    syscall_init();
+    print_text("Atharva ");
+    syscall_buff[0]=22;
     uint8_t files[]="prg.c prg_aid.c ";
-    k[1]=(uint32_t)&files[0];
+    syscall_buff[1]=(uint32_t)&files[0];
     self_intr(0x80);
-    struct Process_Control_Block* pcb=(struct Process_Control_Block*)k[0];
+    struct Process_Control_Block* pcb=(struct Process_Control_Block*)syscall_buff[0];
     pcb->pstat=2;
     exec_prg(pcb->entry_addr, pcb->esp);
-    pcb->pstat=0;*/
-    set_ap_task((uint32_t)test_func, 0x01);
+    pcb->pstat=0;
+
+    syscall_buff[0]=23;
+    syscall_buff[1]=pcb->pid;
+    self_intr(0x80);
+
     while(1){
         asm("hlt");
     }
