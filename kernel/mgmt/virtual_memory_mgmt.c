@@ -65,8 +65,18 @@ uint32_t unmap_page(uint32_t virtualaddr){
     if(pt==0)
         return 0;
     uint32_t temp=(pt[ptindex]&0xFFFFF000)/0x1000;
-    pt[ptindex]=0;
+    pt[ptindex]=2;
+    loadPageDirectory(page_directory);
     return temp*0x1000;
+}
+uint32_t get_pt_entry(uint32_t virtualaddr){
+    uint32_t pdindex = (uint32_t)virtualaddr >> 22;
+    uint32_t ptindex = (uint32_t)virtualaddr >> 12 & 0x03FF;
+    uint32_t *pt = (uint32_t*) (page_directory[pdindex] & 0xFFFFF000);
+    if(pt==0)
+        return 0;
+    else
+        return pt[ptindex];
 }
 void vmm_init(uint32_t limit){
     physmem_limit=limit;

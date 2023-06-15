@@ -74,6 +74,7 @@ exec_prg:
     pushad
     mov eax, [esp + 36]
     mov ebp, [esp + 40]
+    mov ecx, [ebp]  ;checking for page fault
     mov ebx, esp
     mov esp, ebp
     push ebx

@@ -67,19 +67,15 @@ void kmain(){
     init_ap();
     syscall_init();
     print_text("Atharva ");
-    syscall_buff[0]=22;
+    /*syscall_buff[0]=22;
     uint8_t files[]="prg.c prg_aid.c ";
     syscall_buff[1]=(uint32_t)&files[0];
     self_intr(0x80);
     struct Process_Control_Block* pcb=(struct Process_Control_Block*)syscall_buff[0];
     pcb->pstat=2;
     exec_prg(pcb->entry_addr, pcb->esp);
-    pcb->pstat=0;
-
-    syscall_buff[0]=23;
-    syscall_buff[1]=pcb->pid;
-    self_intr(0x80);
-
+    pcb->pstat=0;*/
+    
     while(1){
         asm("hlt");
     }

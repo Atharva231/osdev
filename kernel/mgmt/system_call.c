@@ -177,8 +177,9 @@ void system_call_task(){
         pcb_ptr=get_pcb(pcb_head, syscall_buff[1]);
         if((uint32_t)pcb_ptr==1)
             break;
+        unalloc_pages(pcb_ptr->text_start, pcb_ptr->text_size);
         unalloc_pages(pcb_ptr->bss_start, (pcb_ptr->stack_start - pcb_ptr->bss_start + 1));
-        remove_pcb_node(pcb_head, pcb_ptr);
+        //remove_pcb_node(pcb_head, pcb_ptr);
         break;
 
     case 24:
