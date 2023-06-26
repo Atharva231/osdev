@@ -171,6 +171,7 @@ void system_call_task(){
         pcb_ptr->entry_addr=temp;
         pcb_ptr->apic_id=get_apic_id();
         temp=(uint32_t)pcb_ptr;
+        free_mem((uint32_t)files, t*4);
         break;
     
     case 23:
@@ -179,7 +180,7 @@ void system_call_task(){
             break;
         unalloc_pages(pcb_ptr->text_start, pcb_ptr->text_size);
         unalloc_pages(pcb_ptr->bss_start, (pcb_ptr->stack_start - pcb_ptr->bss_start + 1));
-        //remove_pcb_node(pcb_head, pcb_ptr);
+        remove_pcb_node(pcb_head, pcb_ptr);
         break;
 
     case 24:

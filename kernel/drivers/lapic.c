@@ -38,6 +38,7 @@
 
 uint32_t* lapic_addr=(uint32_t*)0xFEE00000;
 uint32_t timer_calib=0;
+uint32_t tsc_calib;
 bool lock_lapic=false;
 bool sleep_flag;
 
@@ -109,6 +110,7 @@ void timer_task(void){
 uint32_t calib_lapic_timer(){
     uint32_t data[]={0x20, 0x00, 1, 0xFFFFFFFF};
     uint32_t rtc[3];
+    uint32_t tsc[2];
     read_time(rtc);
     uint32_t ps=rtc[0];
     while(ps==rtc[0]){
@@ -117,10 +119,15 @@ uint32_t calib_lapic_timer(){
     read_time(rtc);
     ps=rtc[0];
     set_apic_timer(data);
+    asm("rdtsc");
+    asm("mov %%eax, %0":"=r"(tsc[0]));
     while(ps==rtc[0]){
         read_time(rtc);
     }
     timer_calib=lapic_addr[CCR/4];
+    asm("rdtsc");
+    asm("mov %%eax, %0":"=r"(tsc[1]));
+    tsc_calib=tsc[1]-tsc[0];
     lapic_addr[LVT_TR/4] |= 0x10000;
     timer_calib = 0xFFFFFFFF-timer_calib;
     return timer_calib;
@@ -148,6 +155,55 @@ void sleep_us(uint32_t time){
     set_apic_timer(data);
     while (sleep_flag);
 }
+
+void tsc_sleep_s(uint32_t time){
+    uint32_t itsc, ftsc;
+    asm("rdtsc");
+    asm("mov %%eax, %0":"=r"(itsc));
+    while(time){
+        asm("rdtsc");
+        asm("mov %%eax, %0":"=r"(ftsc));
+        if((ftsc-itsc)>tsc_calib){
+            time-=1;
+            asm("rdtsc");
+            asm("mov %%eax, %0":"=r"(itsc));
+        }
+    }
+
+}
+
+void tsc_sleep_ms(uint32_t time){
+    uint32_t itsc, ftsc;
+    asm("rdtsc");
+    asm("mov %%eax, %0":"=r"(itsc));
+    while(time){
+        asm("rdtsc");
+        asm("mov %%eax, %0":"=r"(ftsc));
+        if((ftsc-itsc)>(tsc_calib/1000)){
+            time-=1;
+            asm("rdtsc");
+            asm("mov %%eax, %0":"=r"(itsc));
+        }
+    }
+
+}
+
+void tsc_sleep_us(uint32_t time){
+    uint32_t itsc, ftsc;
+    asm("rdtsc");
+    asm("mov %%eax, %0":"=r"(itsc));
+    while(time){
+        asm("rdtsc");
+        asm("mov %%eax, %0":"=r"(ftsc));
+        if((ftsc-itsc)>(tsc_calib/1000000)){
+            time-=1;
+            asm("rdtsc");
+            asm("mov %%eax, %0":"=r"(itsc));
+        }
+    }
+
+}
+
 
 void send_EOI(){
     while(lock_lapic);

@@ -14,7 +14,7 @@ void set_ap_task(uint32_t func_addr, uint32_t t_id, uint8_t dest_lapic_id){
     pc=1;
     ap_task_addr=func_addr;
     task_id=t_id;
-    send_IPI(dest_lapic_id, 0x20);
+    send_IPI(dest_lapic_id, 0x3A);
 }
 uint32_t get_numapics(){
     uint32_t ebx=0, unused;
@@ -29,9 +29,9 @@ void ap_init_code(){
     ap_lapic_init();
     send_EOI();
     ap_vmm_init();
-    pc=1;
     print_text("AP");
     lock=0;
+    pc=1;
     while(1){
         asm("hlt");
     }

@@ -3,9 +3,10 @@ void ap_init_code();
 void set_call_id(char);
 extern void get_msr(int code, int* data);
 extern void set_msr(int code, int* data);
-char call_id=0;
+char call_id;
 
 void start(){
+    call_id=0;
     int msr[2];
     get_msr(0x1B, msr);
     int id=*((int*)((msr[0]&0xFFFFF000)|0x20));
@@ -58,7 +59,7 @@ void kmain(){
     atapio_init(true);
     disk_init(0x10000, 0x100000);
     vmm_init(0xFFFFF);
-    filesystem_init(0x9400);
+    //filesystem_init(0x9400);
     set_home_addr((uint32_t)prg);
     lapic_init();
     pit_timer_init();
@@ -75,8 +76,5 @@ void kmain(){
     pcb->pstat=2;
     exec_prg(pcb->entry_addr, pcb->esp);
     pcb->pstat=0;*/
-    
-    while(1){
-        asm("hlt");
-    }
+    halt();
 }

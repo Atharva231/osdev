@@ -21,6 +21,26 @@ uint16_t pciConfigReadWord(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offs
     tmp = (uint16_t)((port_dword_in(0xCFC) >> ((offset & 2) * 8)) & 0xFFFF);
     return tmp;
 }
+
+void pciConfigWriteByte(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset, uint16_t data) {
+    uint32_t address;
+    uint32_t lbus  = (uint32_t)bus;
+    uint32_t lslot = (uint32_t)slot;
+    uint32_t lfunc = (uint32_t)func;
+    uint16_t tmp = 0;
+ 
+    // Create configuration address as per Figure 1
+    address = (uint32_t)((lbus << 16) | (lslot << 11) |
+              (lfunc << 8) | (offset & 0xFC) | ((uint32_t)0x80000000));
+ 
+    // Write out the address
+    port_dword_out(0xCF8, address);
+    tmp = port_dword_in(0xCFC) & 0x00FFFFFF;
+    tmp |= (data<<24);
+    port_dword_out(0xCF8, address);
+    port_dword_out(0xCFC, tmp);
+}
+
 uint16_t getVendorID(uint16_t bus, uint16_t device, uint16_t function)
 {
         uint32_t r0 =  pciConfigReadWord(bus,device,function,0);
@@ -31,12 +51,12 @@ uint16_t getDeviceID(uint16_t bus, uint16_t device, uint16_t function)
         uint32_t r0 =  pciConfigReadWord(bus,device,function,2);
         return r0;
 }
-uint16_t getClassId(uint16_t bus, uint16_t device, uint16_t function)
+uint16_t getClassID(uint16_t bus, uint16_t device, uint16_t function)
 {
         uint32_t r0 =  pciConfigReadWord(bus,device,function,0xA);
         return (r0 & 0xFF00) >> 8;
 }
-uint16_t getSubClassId(uint16_t bus, uint16_t device, uint16_t function)
+uint16_t getSubClassID(uint16_t bus, uint16_t device, uint16_t function)
 {
         uint32_t r0 =  pciConfigReadWord(bus,device,function,0xA);
         return (r0 & 0x00FF);

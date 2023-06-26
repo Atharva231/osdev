@@ -13,6 +13,7 @@ global keyboard_handler
 global page_fault_handler
 global pause_handler
 global ap_task_handler
+global get_idt
 global port_word_in
 global port_word_out
 global port_dword_in
@@ -31,6 +32,7 @@ global set_msr
 [extern pause]
 [extern ap_task]
 [extern print_num]
+[extern print_num_hex]
 [extern send_EOI]
 port_byte_in:
 	mov edx, [esp + 4]
@@ -84,7 +86,8 @@ exec_prg:
     ret
 
 halt:
-    jmp $
+    hlt
+    jmp halt
 
 load_idt:
   	mov edx, [esp + 4]
@@ -173,6 +176,15 @@ ap_task_handler:
     call send_EOI
     popad
     iretd
+
+get_idt:
+    sidt [esp - 8]
+    mov eax, dword [esp - 8]
+    mov ecx, dword [esp - 4]
+    shr eax, 16
+    shl ecx, 16
+    or eax, ecx
+    ret
 
 loadPageDirectory:
     mov eax, [esp + 4]

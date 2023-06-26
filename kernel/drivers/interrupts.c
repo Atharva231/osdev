@@ -8,6 +8,8 @@ extern void pause_handler();
 extern void system_call_handler();
 extern void page_fault_handler();
 extern void ap_task_handler();
+extern void net_intr_handler();
+extern uint32_t get_idt();
 extern void halt();
 void general_protec_task(uint32_t error_code);
 
@@ -45,6 +47,13 @@ void idt_init(void){
 	IDT_entry[0x39].zero = 0;
 	IDT_entry[0x39].type_attr = 0x8E; /* INTERRUPT_GATE */
 	IDT_entry[0x39].offset_higherbits = (func_addr & 0xffff0000) >> 16;
+
+	func_addr = (uint32_t)ap_task_handler;
+	IDT_entry[0x3A].offset_lowerbits = func_addr & 0xffff;
+	IDT_entry[0x3A].selector = 0x08; /* KERNEL_CODE_SEGMENT_OFFSET */
+	IDT_entry[0x3A].zero = 0;
+	IDT_entry[0x3A].type_attr = 0x8E; /* INTERRUPT_GATE */
+	IDT_entry[0x3A].offset_higherbits = (func_addr & 0xffff0000) >> 16;
 
 	func_addr = (uint32_t)system_call_handler;
 	IDT_entry[0x80].offset_lowerbits = func_addr & 0xffff;
@@ -101,47 +110,31 @@ void idt_init(void){
 }
 
 void ap_idt_init(){
-	struct InterruptDescriptor32* ap_idt=(struct InterruptDescriptor32*)mem_alloc(sizeof(struct InterruptDescriptor32)*IDT_SIZE);
-	uint32_t func_addr = (uint32_t)ap_task_handler;
-	ap_idt[0x20].offset_lowerbits = func_addr & 0xffff;
-	ap_idt[0x20].selector = 0x08; /* KERNEL_CODE_SEGMENT_OFFSET */
-	ap_idt[0x20].zero = 0;
-	ap_idt[0x20].type_attr = 0x8E; /* INTERRUPT_GATE */
-	ap_idt[0x20].offset_higherbits = (func_addr & 0xffff0000) >> 16;
-
-	func_addr = (uint32_t)pause_handler;
-	ap_idt[0x39].offset_lowerbits = func_addr & 0xffff;
-	ap_idt[0x39].selector = 0x08; /* KERNEL_CODE_SEGMENT_OFFSET */
-	ap_idt[0x39].zero = 0;
-	ap_idt[0x39].type_attr = 0x8E; /* INTERRUPT_GATE */
-	ap_idt[0x39].offset_higherbits = (func_addr & 0xffff0000) >> 16;
-
-	func_addr = (uint32_t)system_call_handler;
-	ap_idt[0x80].offset_lowerbits = func_addr & 0xffff;
-	ap_idt[0x80].selector = 0x08; /* KERNEL_CODE_SEGMENT_OFFSET */
-	ap_idt[0x80].zero = 0;
-	ap_idt[0x80].type_attr = 0x8E; /* INTERRUPT_GATE */
-	ap_idt[0x80].offset_higherbits = (func_addr & 0xffff0000) >> 16;
-
-	func_addr = (uint32_t)page_fault_handler;
-	ap_idt[0x0E].offset_lowerbits = func_addr & 0xffff;
-	ap_idt[0x0E].selector = 0x08; /* KERNEL_CODE_SEGMENT_OFFSET */
-	ap_idt[0x0E].zero = 0;
-	ap_idt[0x0E].type_attr = 0x8F; /* TRAP_GATE */
-	ap_idt[0x0E].offset_higherbits = (func_addr & 0xffff0000) >> 16;
-
-	func_addr = (uint32_t)general_protec_task;
-    ap_idt[0x0D].offset_lowerbits = func_addr & 0xffff;
-    ap_idt[0x0D].selector = 0x08; /* KERNEL_CODE_SEGMENT_OFFSET */
-    ap_idt[0x0D].zero = 0;
-    ap_idt[0x0D].type_attr = 0x8F; /* TRAP_GATE */
-    ap_idt[0x0D].offset_higherbits = (func_addr & 0xffff0000) >> 16;
-
-	uint32_t idt_address = (uint32_t)ap_idt ;
+	uint32_t idt_address = (uint32_t)IDT_entry ;
 	uint32_t idt_ptr[2];
 	idt_ptr[0] = (sizeof (struct InterruptDescriptor32) * IDT_SIZE) + ((idt_address & 0xffff) << 16) - 1;
 	idt_ptr[1] = idt_address >> 16 ;
 	load_idt(idt_ptr);
+}
+
+void set_interrupt(struct InterruptDescriptor32* intr, uint8_t offset){
+	disable_interrupts();
+	uint8_t* ptr = (uint8_t*)intr;
+	uint8_t* idt_ptr1 = (uint8_t*)&((struct InterruptDescriptor32*)get_idt())[offset];
+	for(uint8_t i=0;i<sizeof (struct InterruptDescriptor32);i++){
+		idt_ptr1[i]=ptr[i];
+	}
+	enable_interrupts();
+}
+
+void get_idt_entry(struct InterruptDescriptor32* intr, uint8_t offset){
+	disable_interrupts();
+	uint8_t* ptr = (uint8_t*)intr;
+	uint8_t* idt_ptr1 = (uint8_t*)&((struct InterruptDescriptor32*)get_idt())[offset];
+	for(uint8_t i=0;i<sizeof (struct InterruptDescriptor32);i++){
+		ptr[i]=idt_ptr1[i];
+	}
+	enable_interrupts();
 }
 
 void general_protec_task(uint32_t error_code){
