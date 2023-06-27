@@ -3,6 +3,7 @@
 #include <stdint.h>
 extern uint32_t port_dword_in(uint32_t);
 extern void port_dword_out(uint32_t, uint32_t);
+
 uint16_t pciConfigReadWord(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset) {
     uint32_t address;
     uint32_t lbus  = (uint32_t)bus;
@@ -41,32 +42,32 @@ void pciConfigWriteByte(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset,
     port_dword_out(0xCFC, tmp);
 }
 
-uint16_t getVendorID(uint16_t bus, uint16_t device, uint16_t function)
+uint16_t PCI_Vendor_ID(uint16_t bus, uint16_t device, uint16_t function)
 {
         uint32_t r0 =  pciConfigReadWord(bus,device,function,0);
         return r0;
 }
-uint16_t getDeviceID(uint16_t bus, uint16_t device, uint16_t function)
+uint16_t PCI_Device_ID(uint16_t bus, uint16_t device, uint16_t function)
 {
         uint32_t r0 =  pciConfigReadWord(bus,device,function,2);
         return r0;
 }
-uint16_t getClassID(uint16_t bus, uint16_t device, uint16_t function)
+uint16_t PCI_Class_ID(uint16_t bus, uint16_t device, uint16_t function)
 {
         uint32_t r0 =  pciConfigReadWord(bus,device,function,0xA);
         return (r0 & 0xFF00) >> 8;
 }
-uint16_t getSubClassID(uint16_t bus, uint16_t device, uint16_t function)
+uint16_t PCI_Subclass_ID(uint16_t bus, uint16_t device, uint16_t function)
 {
         uint32_t r0 =  pciConfigReadWord(bus,device,function,0xA);
         return (r0 & 0x00FF);
 }
-uint16_t getHeaderType(uint16_t bus, uint16_t device, uint16_t function)
+uint16_t PCI_Header_Type(uint16_t bus, uint16_t device, uint16_t function)
 {
         uint32_t r0 =  pciConfigReadWord(bus,device,function,0xE);
         return (r0 & 0x00FF);
 }
-uint32_t getBAR(uint16_t bus, uint16_t device, uint16_t function, uint8_t bar){
+uint32_t PCI_BAR(uint16_t bus, uint16_t device, uint16_t function, uint8_t bar){
         uint8_t offset = bar*4 + 0x10;
         uint32_t r0 =  pciConfigReadWord(bus,device,function,offset);
         uint32_t r1 =  pciConfigReadWord(bus,device,function,offset+2);

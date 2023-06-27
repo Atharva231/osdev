@@ -39,6 +39,7 @@ void set_call_id(char a){
 #include "./mgmt/filesystem.c"
 #include "./mgmt/process_mgmt.c"
 #include "./mgmt/program_loader.c"
+#include "./mgmt/pci_device_mgmt.c"
 #include "./mgmt/system_call.c"
 #include "./drivers/interrupts.c"
 #include <stdint.h>
@@ -59,17 +60,29 @@ void kmain(){
     atapio_init(true);
     disk_init(0x10000, 0x100000);
     vmm_init(0xFFFFF);
-    //filesystem_init(0x9400);
+    filesystem_init(0x9A00);
     set_home_addr((uint32_t)prg);
     lapic_init();
     pit_timer_init();
     rtc_init();
     calib_lapic_timer();
     init_ap();
+    struct pci_device_list* pci_temp = (struct pci_device_list*)pci_init();
     syscall_init();
     print_text("Atharva ");
-    /*syscall_buff[0]=22;
-    uint8_t files[]="prg.c prg_aid.c ";
+    /*uint32_t files[2];
+    files[0]=mem_alloc(file_size("prg.o"));
+    files[1]=mem_alloc(file_size("prg_aid.o"));
+    read_file("prg.o", (uint8_t*)files[0]);
+    read_file("prg_aid.o", (uint8_t*)files[1]);
+    syscall_buff[0]=20;
+    syscall_buff[1]=(uint32_t)&files[0];
+    self_intr(0x80);struct Process_Control_Block* pcb=(struct Process_Control_Block*)syscall_buff[0];
+    pcb->pstat=2;
+    exec_prg(pcb->entry_addr, pcb->esp);
+    pcb->pstat=0;
+    syscall_buff[0]=22;
+    uint8_t files[]="prg.o prg_aid.o ";
     syscall_buff[1]=(uint32_t)&files[0];
     self_intr(0x80);
     struct Process_Control_Block* pcb=(struct Process_Control_Block*)syscall_buff[0];

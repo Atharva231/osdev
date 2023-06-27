@@ -1,4 +1,5 @@
 #define SYSCALL_BUFF_LEN 4
+#define STACK_SIZE 0x10000
 #include <stdint.h>
 #include <stdbool.h>
 static uint32_t syscall_buff[SYSCALL_BUFF_LEN];
@@ -103,13 +104,32 @@ void system_call_task(){
     	break;
     case 19:
     	temp=load_elf(syscall_buff[1]);
-        syscall_buff[1]=alloc_pages(0x100000);
+        syscall_buff[1]=alloc_pages(STACK_SIZE);
     	break;
     case 20:
+        files=(uint32_t*)syscall_buff[1];
         syscall_buff[3]=get_heap_size(syscall_buff[1], 0);
-        syscall_buff[2]=alloc_pages(syscall_buff[3]+0x100000);
+        syscall_buff[2]=alloc_pages(syscall_buff[3]+STACK_SIZE);
         temp=load_link_elf(syscall_buff[1], 0, syscall_buff[2]);
-        syscall_buff[1]=(syscall_buff[2]+syscall_buff[3]+0x100000)-1;
+        syscall_buff[1]=(syscall_buff[2]+syscall_buff[3]+STACK_SIZE)-1;
+        if(pcb_head==0){
+            pcb_head=create_pcb_list();
+            pcb_ptr=pcb_head;
+        }
+        else{
+            pcb_ptr=add_pcb_node(pcb_head);
+        }
+        pcb_ptr->pstat=1;
+        pcb_ptr->text_start=files[0];
+        pcb_ptr->text_size=f_size;
+        pcb_ptr->bss_start=syscall_buff[2];
+        pcb_ptr->stack_start=syscall_buff[1];
+        uint32_t* ptr1=(uint32_t*)pcb_ptr->stack_start;
+        *ptr1=pcb_ptr->pid;
+        pcb_ptr->esp=pcb_ptr->stack_start-4;
+        pcb_ptr->entry_addr=temp;
+        pcb_ptr->apic_id=get_apic_id();
+        temp=(uint32_t)pcb_ptr;
         break;
     case 21:
         temp=link_elf(syscall_buff[1],syscall_buff[2]);
@@ -150,9 +170,9 @@ void system_call_task(){
         }
         syscall_buff[1]=(uint32_t)files;
         syscall_buff[3]=get_heap_size(syscall_buff[1], 0);
-        syscall_buff[2]=alloc_pages(syscall_buff[3]+0x10000);
+        syscall_buff[2]=alloc_pages(syscall_buff[3]+STACK_SIZE);
         temp=load_link_elf(syscall_buff[1], 0, syscall_buff[2]);
-        syscall_buff[1]=(syscall_buff[2]+syscall_buff[3]+0x10000)-1;
+        syscall_buff[1]=(syscall_buff[2]+syscall_buff[3]+STACK_SIZE)-1;
         if(pcb_head==0){
             pcb_head=create_pcb_list();
             pcb_ptr=pcb_head;

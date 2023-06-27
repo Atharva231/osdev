@@ -189,22 +189,6 @@ void list_files(uint8_t* buff){
     c-=1;
     buff[c]=0;
 }
-bool chg_dir(uint8_t* name){
-    uint8_t c;
-    for(sub_dir=dir_temp->dir_list; sub_dir!=0; sub_dir=sub_dir->next){
-        c=0;
-        for(uint8_t i=0;i<DIR_NAME_LEN;i++){
-            if(name[i]==sub_dir->dir_name[i]){
-                c++;
-            }
-        }
-        if(c==DIR_NAME_LEN){
-            dir_temp=sub_dir;
-            return true;
-        }
-    }
-    return false;
-}
 void dir_up(){
     if(dir_temp!=root){
         dir_temp=dir_temp->up;
@@ -214,16 +198,25 @@ void reset_dir_ptr(){
     dir_temp=root;
 }
 struct file_list_element* search_file(uint8_t* file){
-    uint8_t c;
+    uint8_t c,c1;
     for(file_temp=dir_temp->files_list; file_temp!=0; file_temp=file_temp->next){
         c=0;
-        for(uint8_t i=0;i<FILE_NAME_LEN;i++){
-            if(file_temp->file_name[i]==file[i]){
-                c++;
-            }
+        c1=0;
+        for(uint8_t i=0;i<FILE_NAME_LEN && file[i]!=0;i++){
+            c++;
         }
-        if(c==FILE_NAME_LEN){
-            return file_temp;
+        for(uint8_t i=0;i<FILE_NAME_LEN && file_temp->file_name[i]!=0;i++){
+            c1++;
+        }
+        if(c==c1){
+            c=0;
+            for(uint8_t i=0;i<c1;i++){
+                if(file_temp->file_name[i]==file[i])
+                    c++;
+            }
+            if(c==c1){
+                return file_temp;
+            }
         }
     }
     return (struct file_list_element*)1;
@@ -309,20 +302,39 @@ void read_file(uint8_t* f_name, uint8_t* dst_addr){
     }
 }
 struct dir_list_element* search_dir(uint8_t* dirName){
-    uint8_t c;
+    uint8_t c,c1;
     for(sub_dir=dir_temp->dir_list; sub_dir!=0; sub_dir=sub_dir->next){
         c=0;
-        for(uint8_t i=0;i<DIR_NAME_LEN;i++){
-            if(dir_temp->dir_name[i]==dirName[i]){
-                c++;
-            }
+        c1=0;
+        for(uint8_t i=0;i<DIR_NAME_LEN && dirName[i]!=0;i++){
+            c++;
         }
-        if(c==DIR_NAME_LEN){
-            return dir_temp;
+        for(uint8_t i=0;i<DIR_NAME_LEN && sub_dir->dir_name[i]!=0;i++){
+            c1++;
+        }
+        if(c==c1){
+            c=0;
+            for(uint8_t i=0;i<c1;i++){
+                if(sub_dir->dir_name[i]==dirName[i])
+                    c++;
+            }
+            if(c==c1){
+                return sub_dir;
+            }
         }
     }
     return (struct dir_list_element*)1;
 }
+
+bool chg_dir(uint8_t* dirName){
+    sub_dir=search_dir(dirName);
+    if((uint32_t)sub_dir==1){
+        dir_temp=sub_dir;
+        return true;
+    }
+    return false;
+}
+
 void delete_file(uint8_t* file_name){
     struct file_list_element* file=search_file(file_name);
     for(uint8_t i=0;i<ENTRIES_PER_FILE;i++){
@@ -374,7 +386,7 @@ void delete_dir(uint8_t* dir_name){
     for(file_temp=sub_dir->files_list;file_temp!=0;file_temp=file_temp->next){
         delete_file(file_temp->file_name);
     }
-    uint16_t c=count_dirs();
+    uint16_t c=count_dirs(),c1;
     if(c!=0){
 	for(sub_dir=dir_temp->dir_list;sub_dir!=0;sub_dir=sub_dir->next){
             delete_dir(sub_dir->dir_name);
@@ -385,23 +397,37 @@ void delete_dir(uint8_t* dir_name){
     struct dir_list_element* sub_dir1;
     uint32_t p=0;
     for(sub_dir1=dir_temp->dir_list;sub_dir1!=0;sub_dir1=sub_dir1->next,p++){
-	c=0;
-	for(uint8_t i=0;i<DIR_NAME_LEN;i++){
-	    if(sub_dir->dir_name[i]==sub_dir1->dir_name[i])
-		c++;
-	}
-	if(c==DIR_NAME_LEN){
-	    dir_temp->dir_list=remove_dir_node(p, dir_temp->dir_list);
-	    return;
-	}
+	    c=0;
+        c1=0;
+        for(uint8_t i=0;i<DIR_NAME_LEN && sub_dir->dir_name[i]!=0;i++){
+            c++;
+        }
+        for(uint8_t i=0;i<DIR_NAME_LEN && sub_dir1->dir_name[i]!=0;i++){
+            c1++;
+        }
+        if(c==c1){
+            c=0;
+            for(uint8_t i=0;i<c1;i++){
+                if(sub_dir->dir_name[i]==sub_dir1->dir_name[i])
+                    c++;
+            }
+            if(c==c1){
+                dir_temp->dir_list=remove_dir_node(p, dir_temp->dir_list);
+                return;
+            }
+        }
     }
 }
 bool rename_file(uint8_t* src_name, uint8_t* dest_name){
     file_temp=search_file(src_name);
     if(file_temp==(struct file_list_element*)1)
-	return false;
-    for(uint8_t i=0;i<FILE_NAME_LEN;i++){
-	file_temp->file_name[i]=dest_name[i];
+	    return false;
+    for(uint8_t i=0;;i++){
+        if(dest_name[i]==0){
+            file_temp->file_name[i]=0;
+            break;
+        }
+	    file_temp->file_name[i]=dest_name[i];
     }
     return true;
 }
@@ -409,8 +435,12 @@ bool rename_dir(uint8_t* src_name, uint8_t* dest_name){
     sub_dir=search_dir(src_name);
     if(sub_dir==(struct dir_list_element*)1)
         return false;
-    for(uint8_t i=0;i<DIR_NAME_LEN;i++){
-        sub_dir->dir_name[i]=dest_name[i];
+    for(uint8_t i=0;;i++){
+        if(dest_name[i]==0){
+            sub_dir->dir_name[i]=0;
+            break;
+        }
+	    sub_dir->dir_name[i]=dest_name[i];
     }
     return true;
 }
