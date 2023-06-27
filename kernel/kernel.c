@@ -81,6 +81,7 @@ void kmain(){
     pcb->pstat=2;
     exec_prg(pcb->entry_addr, pcb->esp);
     pcb->pstat=0;
+    
     syscall_buff[0]=22;
     uint8_t files[]="prg.o prg_aid.o ";
     syscall_buff[1]=(uint32_t)&files[0];
