@@ -23,4 +23,7 @@ void main(){
     print(msg, cursor);
     buff[1]=50;
     ano_buff[3]=51;
+	while(1){
+		asm("hlt");
+	}
 }

@@ -2,14 +2,21 @@
 #define STACK_SIZE 0x10000
 #include <stdint.h>
 #include <stdbool.h>
-static uint32_t syscall_buff[SYSCALL_BUFF_LEN];
-static struct Process_Control_Block* pcb_head=0;
+uint32_t *syscall_buff;
+struct Process_Control_Block* pcb_head=0;
 bool syscall_lock=false;
+bool buff_lock=false;
 void syscall_init(){
     syscall_lock=false;
+    buff_lock=false;
 }
 uint32_t* get_syscall_buff(){
 	return syscall_buff;
+}
+void set_syscall_buff(uint32_t* buff){
+    while(buff_lock);
+    buff_lock=true;
+    syscall_buff=buff;
 }
 struct Process_Control_Block* get_pcb_head(){
     return pcb_head;
@@ -221,4 +228,5 @@ void system_call_task(){
     }
     syscall_buff[0]=temp;
     syscall_lock=false;
+    buff_lock=false;
 }

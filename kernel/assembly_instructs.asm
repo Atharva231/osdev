@@ -10,6 +10,7 @@ global system_call_handler
 global enable_interrupts
 global disable_interrupts
 global keyboard_handler
+global cont_switch
 global page_fault_handler
 global pause_handler
 global ap_task_handler
@@ -25,6 +26,7 @@ global read_cr2
 global get_msr
 global set_msr
 [extern keyboard_get_print]
+[extern test_save_state]
 [extern save_state]
 [extern timer_task]
 [extern system_call_task]
@@ -121,10 +123,10 @@ keyboard_handler:
     iretd
     chgPrg:
         push esp
-        push dword[esp + 40]
+        push dword[esp + 44]
         push dword[esp + 40]
         push eax
-        call save_state
+        call test_save_state
         pop ebx
         pop ecx
         pop ecx
@@ -135,6 +137,20 @@ keyboard_handler:
         call send_EOI
         iretd
         
+cont_switch:
+    pushad
+    push esp
+    push dword [esp + 44]
+    push dword [esp + 40]
+    call save_state
+    pop ecx
+    pop ecx
+    pop ecx
+    push dword[esp + 40]
+    push cs
+    push eax
+    call send_EOI
+    iretd
 
 system_call_handler:
     pushad

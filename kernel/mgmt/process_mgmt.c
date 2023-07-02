@@ -1,8 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 extern uint32_t resume_prg();
-static uint32_t id_count=0;
-static uint32_t home_addr;
+uint32_t id_count=0, prg_addr, prg_id;
 struct Process_Control_Block* get_pcb_head();
 struct Process_Control_Block{
 	uint32_t pid;
@@ -29,36 +28,37 @@ struct Process_Control_Block* get_pcb(struct Process_Control_Block* pcb_head, ui
 struct Process_Control_Block* get_live_pcb(struct Process_Control_Block* pcb_head){
 	struct Process_Control_Block* temp=pcb_head;
 	for(;temp!=0;temp=temp->next){
-		if(temp->pstat==2){
+		if(temp->pstat==2 && temp->apic_id==get_apic_id()){
 			return temp;
 		}
 	}
 	return 0;
 }
-uint32_t save_state(uint32_t int_id, uint32_t addr, uint32_t flag, uint32_t esp){
+uint32_t test_save_state(uint32_t int_id, uint32_t addr, uint32_t flag, uint32_t esp){
 	struct Process_Control_Block* pcb=get_live_pcb(get_pcb_head());
 	if(pcb!=0){
 		pcb->esp=esp;
 		pcb->entry_addr=addr;
 		pcb->pflags=flag;
-		/*print_num(pcb->pid);
+		/*print_num_hex(pcb->pid);
 		print_text(",");
-		print_num(addr);
+		print_num_hex(addr);
 		print_text(",");
-		print_num(flag);
+		print_num_hex(flag);
 		print_text(",");
-		print_num(esp);
+		print_num_hex(esp);
 		print_text(",");
-		print_num(pcb->stack_start);
+		print_num_hex(pcb->stack_start);
 		print_text(",");*/
 	}
 	if(int_id==2){
 		pcb->pstat=1;
-		return home_addr;
+		return prg_addr;
 	}
 }
-uint32_t resume_prg(uint32_t id){
-	struct Process_Control_Block* pcb=get_pcb(get_pcb_head(), id);
+
+uint32_t resume_prg(){
+	struct Process_Control_Block* pcb=get_pcb(get_pcb_head(), prg_id);
 	if(pcb==0){
 		return 0;
 	}
@@ -66,11 +66,33 @@ uint32_t resume_prg(uint32_t id){
 		return 0;
 	}
 	pcb->pstat=2;
+	pcb->apic_id=get_apic_id();
 	asm("mov %0, %%esp"::"r"(pcb->esp));
 	asm("popal");
 	asm("iretl");
 	return 1;
 }
+
+uint32_t save_state(uint32_t addr, uint32_t flag, uint32_t esp){
+	struct Process_Control_Block* pcb=get_live_pcb(get_pcb_head());
+	if(pcb!=0){
+		pcb->esp=esp;
+		pcb->entry_addr=addr;
+		pcb->pflags=flag;
+		/*print_num_hex(pcb->pid);
+		print_text(",");
+		print_num_hex(addr);
+		print_text(",");
+		print_num_hex(flag);
+		print_text(",");
+		print_num_hex(esp);
+		print_text(",");
+		print_num_hex(pcb->stack_start);
+		print_text(",");*/
+	}
+	return prg_addr;
+}
+
 struct Process_Control_Block* create_pcb_list(){
 	struct Process_Control_Block* pcb_head=(struct Process_Control_Block*)mem_alloc(sizeof(struct Process_Control_Block));
 	id_count+=1;
@@ -116,6 +138,6 @@ uint8_t remove_pcb_node(struct Process_Control_Block* pcb_head, struct Process_C
 	id_count-=1;
 	return 1;
 }
-void set_home_addr(uint32_t addr){
-	home_addr=addr;
+void set_prg_addr(uint32_t addr){
+	prg_addr=addr;
 }
