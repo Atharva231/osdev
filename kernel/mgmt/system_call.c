@@ -219,10 +219,15 @@ void system_call_task(){
         read_date(syscall_buff);
         temp=syscall_buff[0];
         break;
+    
     case 26:
-        print_text("syscall");
+        temp=alloc_pages(syscall_buff[1]);
         break;
-        
+    
+    case 27:
+        unalloc_pages(syscall_buff[1], syscall_buff[2]);
+        break;
+
     default:
         break;
     }

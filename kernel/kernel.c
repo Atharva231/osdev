@@ -61,7 +61,7 @@ void kmain(){
     disk_init(0x10000, 0x100000);
     vmm_init(0xFFFFF);
     filesystem_init(0x9C00);
-    set_prg_addr((uint32_t)prg);
+    set_prg_addr((uint32_t)resume_prg);
     lapic_init();
     pit_timer_init();
     rtc_init();
