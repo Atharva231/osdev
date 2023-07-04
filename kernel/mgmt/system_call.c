@@ -1,5 +1,8 @@
 #define SYSCALL_BUFF_LEN 4
 #define STACK_SIZE 0x10000
+#define FILE_NAME_LEN 19
+#define DIR_NAME_LEN 15
+#define ENTRIES_PER_FILE 1
 #include <stdint.h>
 #include <stdbool.h>
 uint32_t *syscall_buff;
@@ -62,7 +65,7 @@ void system_call_task(){
     	temp=file_size((uint8_t*)syscall_buff[1]);
     	break;
     case 7:
-    	temp=count_files();
+    	temp=count_pwd_files();
     	break;
     case 8:
     	list_files((uint8_t*)syscall_buff[1]);
@@ -94,7 +97,7 @@ void system_call_task(){
     	reset_dir_ptr();
     	break;
     case 15:
-    	temp=count_dirs();
+    	temp=count_pwd_dirs();
     	break;
     case 16:
     	list_dirs((uint8_t*)syscall_buff[1]);

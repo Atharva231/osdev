@@ -7,17 +7,15 @@ static struct dir_list_element* root;
 static struct dir_list_element* dir_temp;
 static struct dir_list_element* sub_dir;
 static struct file_list_element* file_temp;
-static uint8_t buff[512];
+uint8_t fs_buff[512];
 static uint32_t temp_file_addr[ENTRIES_PER_FILE][2];
-uint16_t count_dirs(){
-    uint16_t c=0;
-    for(sub_dir=dir_temp->dir_list;sub_dir!=0;sub_dir=sub_dir->next,c++){
-
-    }
+uint32_t count_pwd_dirs(){
+    uint32_t c=0;
+    for(sub_dir=dir_temp->dir_list;sub_dir!=0;sub_dir=sub_dir->next,c++){}
     return c;
 }
-uint16_t count_files(){
-    uint16_t c=0;
+uint32_t count_pwd_files(){
+    uint32_t c=0;
     file_temp=dir_temp->files_list;
     while(file_temp!=0){
         file_temp=file_temp->next;
@@ -25,8 +23,35 @@ uint16_t count_files(){
     }
     return c;
 }
+
+uint32_t count_dirs(struct dir_list_element* dir_ptr){
+    uint32_t c=0;
+    for(sub_dir=dir_ptr->dir_list;sub_dir!=0;sub_dir=sub_dir->next,c++){}
+    return c;
+}
+uint32_t count_files(struct dir_list_element* dir_ptr){
+    uint32_t c=0;
+    file_temp=dir_ptr->files_list;
+    while(file_temp!=0){
+        file_temp=file_temp->next;
+        c++;
+    }
+    return c;
+}
+
+uint32_t count_files_dirs(uint32_t* c, struct dir_list_element* dir_ptr){
+    if(dir_ptr==0){
+        c[0]=0;
+        c[1]=0;
+        return 0;
+    }
+    count_files_dirs(c, dir_ptr->dir_list);
+    c[0]+=count_files(dir_ptr);
+    c[1]+=count_dirs(dir_ptr);
+}
 void filesystem_init(uint32_t addr){
-    filesystem_addr = addr/0x200;
+    addr/=0x200;
+    filesystem_addr = addr;
     bool f_end = true;
     uint16_t ptr;
     uint8_t* ptr_buff;
@@ -34,14 +59,14 @@ void filesystem_init(uint32_t addr){
     dir_temp=root;
     file_temp=0;
     ptr=0;
-    read_sectors((uint16_t*)buff, filesystem_addr, 0x1);
+    read_sectors((uint16_t*)fs_buff, addr, 0x1);
     while(f_end){
         if(ptr>=512){
             ptr=0;
-            read_sectors((uint16_t*)buff, filesystem_addr, 0x1);
-            filesystem_addr+=1;
+            read_sectors((uint16_t*)fs_buff, addr, 0x1);
+            addr+=1;
         }
-        switch (buff[ptr])
+        switch (fs_buff[ptr])
         {
         case ' ':
         case ',':
@@ -50,7 +75,7 @@ void filesystem_init(uint32_t addr){
                 file_temp=create_file_list("temp", (uint8_t*)temp_file_addr);
                 ptr_buff=(uint8_t*)file_temp;
                 for(uint16_t i=0;i<sizeof(struct file_list_element);i++){
-                    ptr_buff[i]=buff[ptr+i];
+                    ptr_buff[i]=fs_buff[ptr+i];
                 }
                 file_temp->next=0;
                 dir_temp->files_list=file_temp;
@@ -67,7 +92,7 @@ void filesystem_init(uint32_t addr){
                 }
                 ptr_buff=(uint8_t*)file_temp;
                 for(uint16_t i=0;i<sizeof(struct file_list_element);i++){
-                    ptr_buff[i]=buff[ptr+i];
+                    ptr_buff[i]=fs_buff[ptr+i];
                 }
                 for(uint8_t i=0;i<ENTRIES_PER_FILE;i++){
                     if(file_temp->file_addr[i][1]!=0)
@@ -75,11 +100,10 @@ void filesystem_init(uint32_t addr){
                 }
                 file_temp->next=0;
             }
-            if(buff[ptr]==','){
-                file_temp=0;
+            if(fs_buff[ptr]==' '){
+                dir_temp=dir_temp->next;
             }
-            else if(buff[ptr]=='|'){
-                file_temp=0;
+            else if(fs_buff[ptr]=='|'){
                 dir_temp=dir_temp->dir_list;
             }
             ptr+=sizeof(struct file_list_element);
@@ -92,7 +116,7 @@ void filesystem_init(uint32_t addr){
                 sub_dir=create_dir_list("temp");
                 ptr_buff=(uint8_t*)sub_dir;
                 for(uint16_t i=0;i<sizeof(struct dir_list_element);i++){
-                    ptr_buff[i]=buff[ptr+i];
+                    ptr_buff[i]=fs_buff[ptr+i];
                 }
                 dir_temp->dir_list=sub_dir;
             }
@@ -104,16 +128,16 @@ void filesystem_init(uint32_t addr){
                 }
                 ptr_buff=(uint8_t*)sub_dir;
                 for(uint16_t i=0;i<sizeof(struct dir_list_element);i++){
-                    ptr_buff[i]=buff[ptr+i];
+                    ptr_buff[i]=fs_buff[ptr+i];
                 }
             }
             sub_dir->next=0;
             sub_dir->dir_list=0;
             sub_dir->up=dir_temp;
-            if(buff[ptr]==';'){
+            if(fs_buff[ptr]==';'){
                 dir_temp=dir_temp->next;
             }
-            else if(buff[ptr]=='/'){
+            else if(fs_buff[ptr]=='/'){
                 dir_temp=dir_temp->dir_list;
             }
             ptr+=sizeof(struct dir_list_element);
@@ -124,54 +148,89 @@ void filesystem_init(uint32_t addr){
             break;
 
         default:
-            break;
+            print_text("Filesystem is Corrupted !!");
+            while(1){
+                asm("hlt");
+            }
         }
     }
     dir_temp=root;
 }
+
 void update_fat(){
-    struct dir_list_element* dir_ptr = (struct dir_list_element*)&root;
-    uint8_t* file_ptr;
-    uint16_t ptr=0;
+    struct dir_list_element* dir_ptr = dir_temp;
+    struct dir_list_element* sub_dir_temp;
+    uint8_t* fs_temp;
+    uint8_t* ptr;
     bool f=true;
+    uint32_t c[2];
+    uint32_t fs_temp_ptr=0;
+    uint32_t fs_size=0;
+    uint32_t dir_count=0;
+    count_files_dirs(c, dir_ptr);
+    if(c[0]==0 && c[1]==0){
+        print_text("Filesystem is Corrupted !!");
+        while(1){
+            asm("hlt");
+        }
+    }
+    fs_size=(c[0]*sizeof(struct file_list_element) + c[1]*sizeof(struct dir_list_element)) + 1;
+    if(fs_size%512!=0){
+        fs_size/=512;
+        fs_size+=512;
+    }
+    fs_temp=(uint8_t*)mem_alloc(fs_size);
     while(f){
-    for(file_temp=dir_ptr->files_list;file_temp!=0;file_temp=file_temp->next){
-	file_ptr=(uint8_t*)file_temp;
-	for(uint16_t i=0;i<sizeof(struct file_list_element);i++,ptr++)
-	    buff[ptr]=file_ptr[i];
-	if(ptr>=512){
-	    write_sectors(filesystem_addr, 0x1, (uint16_t*)buff);
-	    for(uint16_t j=0;j<512;j++)
-		buff[j]=0;
-	    ptr=0;
-	    filesystem_addr+=1;
+        if(count_dirs(dir_ptr)!=0){
+            dir_count=0;
+            for(sub_dir_temp=dir_ptr->dir_list; sub_dir_temp!=0; sub_dir_temp=sub_dir_temp->next){
+                if(sub_dir_temp->next==0 && count_files(dir_ptr)==0){
+                    if(dir_ptr->next==0){
+                        sub_dir_temp->delim='/';
+                        dir_ptr=dir_ptr->dir_list;
+                        if(dir_count==0){
+                            f=false;
+                        }
+                    }
+                    else{
+                        sub_dir_temp->delim=';';
+                        dir_ptr=dir_ptr->next;
+                    }
+                }
+                ptr=(uint8_t*)sub_dir_temp;
+                for(uint8_t i=0;i<sizeof(struct dir_list_element);i++,fs_temp_ptr++){
+                    fs_temp[fs_temp_ptr]=ptr[i];
+                }
+                dir_count+=count_dirs(sub_dir_temp);
+            }
+        }
+        if(count_files(dir_ptr)!=0){
+            for(file_temp=dir_ptr->files_list;file_temp!=0;file_temp=file_temp->next){
+                if(file_temp->next==0){
+                    if(dir_ptr->next==0){
+                        file_temp->delim='|';
+                        dir_ptr=dir_ptr->dir_list;
+                        if(dir_count==0){
+                            f=false;
+                        }
+                    }
+                    else{
+                        file_temp->delim=' ';
+                        dir_ptr=dir_ptr->next;
+                    }
+                }
+                ptr=(uint8_t*)file_temp;
+                for(uint8_t i=0;i<sizeof(struct file_list_element);i++,fs_temp_ptr++){
+                    fs_temp[fs_temp_ptr]=ptr[i];
+                }
+            }
         }
     }
-    for(sub_dir=dir_ptr->dir_list;sub_dir!=0;sub_dir=sub_dir->next){
-    	file_ptr=(uint8_t*)sub_dir;
-	for(uint16_t i=0;i<sizeof(struct dir_list_element);i++,ptr++)
-	    buff[ptr]=file_ptr[i];
-        if(ptr>=512){
-            write_sectors(filesystem_addr, 0x1, (uint16_t*)buff);
-            for(uint16_t j=0;j<512;j++)
-                buff[j]=0;
-            ptr=0;
-            filesystem_addr+=1;
-        }
-    }
-    if(dir_ptr->next==0){
-	if(dir_ptr->dir_list==0){
-	    f=false;
-	    buff[ptr]='!';
-	    write_sectors(filesystem_addr, 0x1, (uint16_t*)buff);
-	}
-	else
-	    dir_ptr=dir_ptr->dir_list;
-    }
-    else
-	dir_ptr=dir_ptr->next;
-    }
+    fs_temp[fs_temp_ptr]='!';
+    write_sectors(filesystem_addr, fs_size/512, (uint16_t*)fs_temp);
+    free_mem((uint32_t)fs_temp, fs_size);
 }
+
 struct dir_list_element* pwd(){
     return dir_temp;
 }
@@ -252,10 +311,6 @@ bool create_file(uint8_t* file){
     }
     else{
         append_file_node(file, (uint8_t*)temp_file_addr, dir_temp->files_list);
-    }
-    if(count_dirs()==0){
-	for(file_temp=dir_temp->files_list;file_temp->next!=0;file_temp=file_temp->next){}
-	file_temp->delim='|';
     }
     return true;
 }
@@ -352,17 +407,13 @@ void delete_file(uint8_t* file_name){
 }
 bool create_dir(uint8_t* dir_name){
     if((uint32_t)search_dir(dir_name)!=1){
-	return false;
+	    return false;
     }
     if(dir_temp->dir_list==0){
-	dir_temp->dir_list=create_dir_list(dir_name);
+	    dir_temp->dir_list=create_dir_list(dir_name);
     }
     else{
-	append_dir_node(dir_name, dir_temp->dir_list);
-    }
-    if(dir_temp->next==0){
-	for(sub_dir=dir_temp->dir_list;sub_dir->next!=0;sub_dir=sub_dir->next){}
-	sub_dir->delim='/';
+	    append_dir_node(dir_name, dir_temp->dir_list);
     }
     return true;
 }
@@ -382,11 +433,10 @@ void delete_dir(uint8_t* dir_name){
     if(!chg_dir(dir_name))
         return;
     sub_dir=dir_temp;
-    uint8_t space[]={' ','~'};
     for(file_temp=sub_dir->files_list;file_temp!=0;file_temp=file_temp->next){
         delete_file(file_temp->file_name);
     }
-    uint16_t c=count_dirs(),c1;
+    uint16_t c=count_pwd_dirs(),c1;
     if(c!=0){
 	for(sub_dir=dir_temp->dir_list;sub_dir!=0;sub_dir=sub_dir->next){
             delete_dir(sub_dir->dir_name);

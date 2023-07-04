@@ -49,13 +49,13 @@ struct dir_list_element* create_dir_list(uint8_t* name){
     if(head==0){
         return 0;
     }
-    for(uint8_t i=0;i<FILE_NAME_LEN;i++)
+    for(uint8_t i=0;i<DIR_NAME_LEN;i++)
         head->dir_name[i]=name[i];
     head->files_list=0;
     head->dir_list=0;
     head->next=0;
     head->up=0;
-    head->delim = ';';
+    head->delim = '.';
     return head;
 }
 
@@ -77,7 +77,6 @@ uint8_t append_file_node(uint8_t* name, uint8_t* addr,struct file_list_element* 
     while(temp->next!=0){
         temp=temp->next;
     }
-    temp->delim=' ';
     temp->next=node;
     return 1;
 }
@@ -89,16 +88,15 @@ uint8_t append_dir_node(uint8_t* name, struct dir_list_element* head){
         return 0;
     }
     struct dir_list_element* temp=head;
-    for(uint8_t i=0;i<FILE_NAME_LEN;i++)
+    for(uint8_t i=0;i<DIR_NAME_LEN;i++)
         node->dir_name[i]=name[i];
     node->dir_list=0;
     node->files_list=0;
     node->next = 0;
-    node->delim = ';';
+    node->delim = '.';
     while(temp->next!=0){
         temp=temp->next;
     }
-    temp->delim='.';
     temp->next=node;
     return 1;
 }

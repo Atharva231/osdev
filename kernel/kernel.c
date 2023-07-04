@@ -60,7 +60,6 @@ void kmain(){
     atapio_init(true);
     disk_init(0x10000, 0x100000);
     vmm_init(0xFFFFF);
-    filesystem_init(0x9C00);
     set_prg_addr((uint32_t)resume_prg);
     lapic_init();
     pit_timer_init();
@@ -68,10 +67,10 @@ void kmain(){
     calib_lapic_timer();
     init_ap();
     struct pci_device_list* pci_temp = (struct pci_device_list*)pci_init();
+    filesystem_init(0x9C00);
     syscall_init();
     print_text("Atharva ");
-    
-    uint32_t files[2];
+    /*uint32_t files[2];
     files[0]=mem_alloc(file_size("prg.o"));
     files[1]=mem_alloc(file_size("prg_aid.o"));
     read_file("prg.o", (uint8_t*)files[0]);
@@ -86,7 +85,6 @@ void kmain(){
     exec_prg(pcb->entry_addr, pcb->esp);
     pcb->pstat=0;
     
-    /*
     uint32_t sys_buff[4];
     sys_buff[0]=22;
     uint8_t files[]="prg.o prg_aid.o ";

@@ -1,8 +1,7 @@
 cd kernel
 gcc -fno-PIC -fno-stack-protector -m32 -s -c kernel.c
-nasm program_entry.asm -f elf32 -o program_entry.o
 nasm assembly_instructs.asm -f elf32 -o assembly_instructs.o
-nasm fat.asm -o fat.bin
+#nasm fat.asm -o fat.bin
 
 cd boot
 nasm multi_core_boot.asm -o multi_core_boot.bin
