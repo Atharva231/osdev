@@ -56,8 +56,8 @@ def parse_fs(path, prev_dirs):
     if(len(d)>0):
         delim='.'
         for i in d:
-            if(d.index(i)==len(d)-1):
-                if(len(f)>0):
+            if(d.index(i)==len(d)-1 and len(f)==0):
+                if(len(prev_dirs)>0):
                     delim=';'
                 else:
                     delim='/'
@@ -77,7 +77,9 @@ def parse_fs(path, prev_dirs):
             parse_fs(new_path, d)
     
 
-f1=[';','dir1', 0x1234, 0x5678]
 test_files=open("./kernel/fat.bin", "w")
 test_files.close()
 parse_fs("./os",[])
+test_files=open("kernel/fat.bin", "+ab")
+test_files.write(b"!")
+test_files.close()

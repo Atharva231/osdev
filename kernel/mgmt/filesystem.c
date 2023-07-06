@@ -256,7 +256,7 @@ void list_files(uint8_t* buff){
         for(uint8_t i=0;file_temp->file_name[i]!=0;i++,c++){
             buff[c]=file_temp->file_name[i];
         }
-        buff[c]=',';
+        buff[c]=' ';
         c+=1;
         file_temp=file_temp->next;
     }
@@ -398,7 +398,7 @@ struct dir_list_element* search_dir(uint8_t* dirName){
 
 bool chg_dir(uint8_t* dirName){
     sub_dir=search_dir(dirName);
-    if((uint32_t)sub_dir==1){
+    if((uint32_t)sub_dir!=1){
         dir_temp=sub_dir;
         return true;
     }
@@ -438,7 +438,7 @@ void list_dirs(uint8_t* buff){
         for(uint8_t i=0;sub_dir->dir_name[i]!=0;i++,c++){
             buff[c]=sub_dir->dir_name[i];
         }
-        buff[c]=',';
+        buff[c]=' ';
         c+=1;
     }
     c-=1;
