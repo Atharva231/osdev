@@ -1,6 +1,7 @@
 import os
 from ctypes import *
-
+dir_struct_size=32
+file_struct_size=32
 
 def append_file(f):
     file_list=[ord(f[0])]
@@ -16,7 +17,7 @@ def append_file(f):
     for i in range(4):
         file_list.append(f[3]%0x100)
         f[3]//=0x100
-    file=(c_int8*32)(*file_list)
+    file=(c_int8*file_struct_size)(*file_list)
     test_files=open("kernel/fat.bin", "+ab")
     test_files.write(file)
     test_files.close()
@@ -29,9 +30,9 @@ def append_dir(f):
             dir_list.append(ord(f[1][i]))
         else:
             dir_list.append(0)
-    file=(c_int8*32)(*dir_list)
+    dir=(c_int8*dir_struct_size)(*dir_list)
     test_files=open("kernel/fat.bin", "+ab")
-    test_files.write(file)
+    test_files.write(dir)
     test_files.close()
 
 def list_files(path):
@@ -76,10 +77,21 @@ def parse_fs(path, prev_dirs):
             new_path=path+"/"+i
             parse_fs(new_path, d)
     
+def calc_fat_size(path, s):
+    d=next(os.walk(path))[1]
+    f=list_files(path)
+    s[0]+=(len(d)*dir_struct_size + len(f)*file_struct_size)
+    for i in d:
+        if('.' not in i):
+            new_path=path+"/"+i
+            calc_fat_size(new_path, s)
 
-test_files=open("./kernel/fat.bin", "w")
+'''test_files=open("./kernel/fat.bin", "w")
 test_files.close()
 parse_fs("./os",[])
 test_files=open("kernel/fat.bin", "+ab")
 test_files.write(b"!")
-test_files.close()
+test_files.close()'''
+sz=[0]
+calc_fat_size("./os",sz)
+print(sz)
