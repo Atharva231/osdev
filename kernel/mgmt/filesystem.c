@@ -180,6 +180,21 @@ void update_fat(){
         fs_size+=512;
     }
     fs_temp=(uint8_t*)mem_alloc(fs_size);
+    if(count_dirs(dir_ptr)>1){
+        if(dir_ptr->dir_list->dir_list==0 && dir_ptr->dir_list->files_list==0){
+            sub_dir=dir_ptr->dir_list;
+            while(count_dirs(sub_dir->next)==0){
+                sub_dir=sub_dir->next;
+                if(sub_dir==0){
+                    break;
+                }
+            }
+            sub_dir_temp=sub_dir->next;
+            sub_dir->next=sub_dir->next->next;
+            sub_dir_temp->next=dir_ptr->dir_list;
+            dir_ptr->dir_list=sub_dir_temp;
+        }
+    }
     while(f){
         if(count_dirs(dir_ptr)!=0){
             dir_count=0;
