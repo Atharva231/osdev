@@ -70,20 +70,6 @@ void kmain(){
     filesystem_init(0x9E00);
     syscall_init();
     print_text("Atharva ");
-    uint8_t* buff=(uint8_t*)mem_alloc(64);
-    list_files(buff);
-    print_text(buff);
-    for(uint8_t i=0;i<64;i++){
-        buff[i]=0;
-    }
-    list_dirs(buff);
-    print_text(buff);
-    chg_dir("lib");
-    for(uint8_t i=0;i<64;i++){
-        buff[i]=0;
-    }
-    list_files(buff);
-    print_text(buff);
     /*uint32_t files[2];
     files[0]=mem_alloc(file_size("prg.o"));
     files[1]=mem_alloc(file_size("prg_aid.o"));

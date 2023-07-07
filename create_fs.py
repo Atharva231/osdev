@@ -42,7 +42,7 @@ def list_files(path):
             f1.append(i)
     return f1
 
-def parse_fs(path, prev_dirs):
+def parse_fs(path, prev_dirs, fat_sz):
     d=next(os.walk(path))[1]
     f=list_files(path)
     delim=''
@@ -71,11 +71,25 @@ def parse_fs(path, prev_dirs):
                     delim=' '
                 else:
                     delim='|'
-            append_file([delim, i, 0, 0])
+            fat_sz[1]=os.path.getsize(path+"/"+i)
+            if(fat_sz[1]%512>0):
+                fat_sz[1]=fat_sz[1]//512
+                fat_sz[1]=fat_sz[1]*512+512
+            append_file([delim, i, fat_sz[0], fat_sz[1]])
+            fat_sz[0]+=fat_sz[1]
+            temp=open(path+"/"+i,"rb")
+            f1=temp.read()
+            temp.close()
+            temp=open("files.bin","+ab")
+            temp.write(f1)
+            s=fat_sz[1]-os.path.getsize(path+"/"+i)
+            for i in range(s):
+                temp.write(b'\0')
+            temp.close()
     for i in d:
         if('.' not in i):
             new_path=path+"/"+i
-            parse_fs(new_path, d)
+            parse_fs(new_path, d, fat_sz)
     
 def calc_fat_size(path, s):
     d=next(os.walk(path))[1]
@@ -86,12 +100,18 @@ def calc_fat_size(path, s):
             new_path=path+"/"+i
             calc_fat_size(new_path, s)
 
-'''test_files=open("./kernel/fat.bin", "w")
-test_files.close()
-parse_fs("./os",[])
-test_files=open("kernel/fat.bin", "+ab")
-test_files.write(b"!")
-test_files.close()'''
 sz=[0]
 calc_fat_size("./os",sz)
-print(sz)
+if(sz[0]%512>0):
+    sz[0]=sz[0]//512
+    sz[0]=sz[0]*512+512
+sz[0]+=os.path.getsize("./temp.bin")
+sz.append(0)
+test_files=open("./kernel/fat.bin", "w")
+test_files.close()
+test_files=open("files.bin", "w")
+test_files.close()
+parse_fs("./os", [], sz)
+test_files=open("kernel/fat.bin", "+ab")
+test_files.write(b"!")
+test_files.close()
