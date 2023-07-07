@@ -67,7 +67,7 @@ void kmain(){
     calib_lapic_timer();
     init_ap();
     struct pci_device_list* pci_temp = (struct pci_device_list*)pci_init();
-    filesystem_init(0x9E00);
+    filesystem_init(0x9C00);
     syscall_init();
     print_text("Atharva ");
     /*uint32_t files[2];
