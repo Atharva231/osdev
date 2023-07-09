@@ -26,8 +26,6 @@ struct Process_Control_Block* get_pcb_head(){
 }
 void system_call_task(){
     bool temp_bool=false,f;
-    uint32_t* files;
-    struct Process_Control_Block* pcb_ptr=0;
     if(cmd[0]==1){
         while(syslock[0]);
         syslock[0]=true;
@@ -126,6 +124,8 @@ void system_call_task(){
         syslock[2]=true;
         uint32_t* pm_sysbuff=(uint32_t*)cmd[1];
         buff_lock=false;
+        uint32_t* files;
+        struct Process_Control_Block* pcb_ptr=0;
         uint16_t c=0,t=0;
         uint32_t f_size=0, ptr=0, ad;
         uint8_t* file_names=(uint8_t*)pm_sysbuff[0];
@@ -136,6 +136,7 @@ void system_call_task(){
             pm_sysbuff[0]=alloc_pages(STACK_SIZE);
             break;
         case 20:
+            print_text("load_link");
             files=(uint32_t*)pm_sysbuff[0];
             pm_sysbuff[2]=get_heap_size(pm_sysbuff[0], 0);
             pm_sysbuff[1]=alloc_pages(pm_sysbuff[2]+STACK_SIZE);
