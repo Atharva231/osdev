@@ -67,33 +67,8 @@ void kmain(){
     calib_lapic_timer();
     init_ap();
     struct pci_device_list* pci_temp = (struct pci_device_list*)pci_init();
-    filesystem_init(0x9C00);
+    //filesystem_init(0x9400);
     syscall_init();
     print_text("Atharva ");
-    /*uint32_t files[2];
-    files[0]=mem_alloc(file_size("prg.o"));
-    files[1]=mem_alloc(file_size("prg_aid.o"));
-    read_file("prg.o", (uint8_t*)files[0]);
-    read_file("prg_aid.o", (uint8_t*)files[1]);
-    uint32_t sys_buff[4];
-    sys_buff[0]=20;
-    sys_buff[1]=(uint32_t)&files[0];
-    set_syscall_buff(sys_buff);
-    self_intr(0x80);
-    struct Process_Control_Block* pcb=(struct Process_Control_Block*)sys_buff[0];
-    pcb->pstat=2;
-    exec_prg(pcb->entry_addr, pcb->esp);
-    pcb->pstat=0;
-    
-    uint32_t sys_buff[4];
-    sys_buff[0]=22;
-    uint8_t files[]="prg.o prg_aid.o ";
-    sys_buff[1]=(uint32_t)&files[0];
-    set_syscall_buff(sys_buff);
-    self_intr(0x80);
-    struct Process_Control_Block* pcb=(struct Process_Control_Block*)sys_buff[0];
-    pcb->pstat=2;
-    exec_prg(pcb->entry_addr, pcb->esp);
-    pcb->pstat=0;*/
     halt();
 }
