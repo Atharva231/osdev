@@ -57,7 +57,7 @@ uint32_t get_heap_size(uint32_t files, uint32_t file_num){
             ++c;
             break;
         case 'r':
-            if(shstrtab[(uint32_t)sec_entry->sh_name+5]=='t'){
+            if(shstrtab[(uint32_t)sec_entry->sh_name+5]=='t' && shstrtab[(uint32_t)sec_entry->sh_name+2]=='e'){
                 reloc_sec=sec_entry;
                 ++c;
             }
@@ -204,7 +204,7 @@ uint32_t load_elf(uint32_t addr){
             ++c;
             break;
         case 'r':
-            if(shstrtab[(uint32_t)sec_entry->sh_name+5]=='t'){
+            if(shstrtab[(uint32_t)sec_entry->sh_name+5]=='t' && shstrtab[(uint32_t)sec_entry->sh_name+2]=='e'){
                 reloc_sec=sec_entry;
                 ++c;
             }
@@ -308,7 +308,7 @@ uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
             ++c;
             break;
         case 'r':
-            if(shstrtab[(uint32_t)sec_entry->sh_name+5]=='t'){
+            if(shstrtab[(uint32_t)sec_entry->sh_name+5]=='t' && shstrtab[(uint32_t)sec_entry->sh_name+2]=='e'){
                 reloc_sec=sec_entry;
                 ++c;
             }
@@ -338,8 +338,6 @@ uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
         switch(sym_entry->st_info&0xF){
         case 0x02:
             src=addr+strtab_sec->sh_offset+(uint8_t*)sym_entry->st_name;
-            print_text(src);
-            print_text(" ");
             c=0;
             for(uint8_t i=0;i<src[i]!=0;i++){
                 c+=1;
@@ -405,13 +403,13 @@ uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
                     elf_hdr=(Elf32_Ehdr*)file_addr[j];
                     if(elf_hdr->e_type!=2){
                         f1=load_link_elf(files, j, reloc_addr);
-                        /*print_num(f1);
-                        print_text(delim);*/
+                        print_num(f1);
+                        print_text(" ");
                     }
                     elf_hdr=(Elf32_Ehdr*)file_addr[file_num];
                     *src_32=(flag-(addr+text_sec->sh_offset+rel_entry->r_offset+4));
-                    /*print_num(*src_32);
-                    print_text(delim);*/
+                    print_text(src);
+                    print_text(" ");
                     break;
                 }
             }
@@ -462,7 +460,7 @@ uint32_t link_elf(uint32_t addr, uint32_t reloc_addr){
             ++c;
             break;
         case 'r':
-            if(shstrtab[(uint32_t)sec_entry->sh_name+5]=='t'){
+            if(shstrtab[(uint32_t)sec_entry->sh_name+5]=='t' && shstrtab[(uint32_t)sec_entry->sh_name+2]=='e'){
                 reloc_sec=sec_entry;
                 ++c;
             }
