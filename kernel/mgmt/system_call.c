@@ -8,13 +8,14 @@
 
 uint32_t* cmd;
 bool syslock[SYSLOCK_LEN];
-struct Process_Control_Block* pcb_head=0;
+struct Process_Control_Block* pcb_list_head;
 bool buff_lock=false;
 void syscall_init(){
     for(uint8_t i=0;i<SYSLOCK_LEN;i++){
         syslock[i]=false;
     }
     buff_lock=false;
+    pcb_list_head=0;
 }
 void set_syscall_buff(uint32_t* buff){
     while(buff_lock);
@@ -22,7 +23,7 @@ void set_syscall_buff(uint32_t* buff){
     cmd=buff;
 }
 struct Process_Control_Block* get_pcb_head(){
-    return pcb_head;
+    return pcb_list_head;
 }
 void system_call_task(){
     bool temp_bool=false,f;
@@ -136,18 +137,18 @@ void system_call_task(){
             pm_sysbuff[0]=alloc_pages(STACK_SIZE);
             break;
         case 20:
-            print_text("load_link");
+            print_text("load_link ");
             files=(uint32_t*)pm_sysbuff[0];
             pm_sysbuff[2]=get_heap_size(pm_sysbuff[0], 0);
             pm_sysbuff[1]=alloc_pages(pm_sysbuff[2]+STACK_SIZE);
             ad=load_link_elf(pm_sysbuff[0], 0, pm_sysbuff[1]);
             pm_sysbuff[0]=(pm_sysbuff[1]+pm_sysbuff[2]+STACK_SIZE)-1;
-            if(pcb_head==0){
-                pcb_head=create_pcb_list();
-                pcb_ptr=pcb_head;
+            if(pcb_list_head==0){
+                pcb_list_head=create_pcb_list();
+                pcb_ptr=pcb_list_head;
             }
             else{
-                pcb_ptr=add_pcb_node(pcb_head);
+                pcb_ptr=add_pcb_node(pcb_list_head);
             }
             pcb_ptr->pstat=1;
             pcb_ptr->text_start=files[0];
@@ -203,12 +204,12 @@ void system_call_task(){
             pm_sysbuff[1]=alloc_pages(pm_sysbuff[2]+STACK_SIZE);
             ad=load_link_elf(pm_sysbuff[0], 0, pm_sysbuff[1]);
             pm_sysbuff[0]=(pm_sysbuff[1]+pm_sysbuff[2]+STACK_SIZE)-1;
-            if(pcb_head==0){
-                pcb_head=create_pcb_list();
-                pcb_ptr=pcb_head;
+            if(pcb_list_head==0){
+                pcb_list_head=create_pcb_list();
+                pcb_ptr=pcb_list_head;
             }
             else{
-                pcb_ptr=add_pcb_node(pcb_head);
+                pcb_ptr=add_pcb_node(pcb_list_head);
             }
             pcb_ptr->pstat=1;
             pcb_ptr->text_start=files[0];
@@ -225,12 +226,12 @@ void system_call_task(){
             break;
         
         case 23:
-            pcb_ptr=get_pcb(pcb_head, pm_sysbuff[0]);
+            pcb_ptr=get_pcb(pcb_list_head, pm_sysbuff[0]);
             if((uint32_t)pcb_ptr==1)
                 break;
             unalloc_pages(pcb_ptr->text_start, pcb_ptr->text_size);
             unalloc_pages(pcb_ptr->bss_start, (pcb_ptr->stack_start - pcb_ptr->bss_start + 1));
-            remove_pcb_node(pcb_head, pcb_ptr);
+            remove_pcb_node(pcb_list_head, pcb_ptr);
             break;
         
         default:

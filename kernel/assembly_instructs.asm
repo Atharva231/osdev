@@ -175,6 +175,10 @@ page_fault_handler:
     call send_EOI
     popad
     add esp, 4
+    push dword[esp]
+    call print_num_hex
+    pop eax
+    jmp halt
     iretd
 
 pause_handler:

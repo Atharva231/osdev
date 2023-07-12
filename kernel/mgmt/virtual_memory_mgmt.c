@@ -160,11 +160,9 @@ void unalloc_pages(uint32_t virtualaddr, uint32_t size){
     }
 }
 void page_fault_task(uint32_t error_code){
-    uint8_t space[]=" ";
-    uint8_t msg[] = "Page Fault ";
-    print_text(msg);
+    print_text("Page Fault ");
     print_num(error_code&0XF);
-    print_text(space);
+    print_text(" ");
     uint32_t page=read_cr2();
     print_num_hex(page);
     page=page>>12;
@@ -175,5 +173,4 @@ void page_fault_task(uint32_t error_code){
     /*else{
         map_page(page, physmem_alloc(1)*0x1000, 0x3);
     }*/
-    while(1){}
 }

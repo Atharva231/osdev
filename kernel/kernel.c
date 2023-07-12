@@ -24,7 +24,7 @@ void set_call_id(char a){
     call_id=a;
 }
 #include "./mgmt/heap.c"
-#include "./drivers/screen.c"
+#include "./drivers/vga.c"
 #include "./drivers/pit_8254.c"
 #include "./drivers/keyboard.c"
 #include "./drivers/ata_pio.c"
@@ -67,7 +67,7 @@ void kmain(){
     calib_lapic_timer();
     init_ap();
     struct pci_device_list* pci_temp = (struct pci_device_list*)pci_init();
-    filesystem_init(0x9E00);
+    filesystem_init(0xAC00);
     syscall_init();
     print_text("Atharva ");
     /*uint32_t f_addr[2];
@@ -86,5 +86,23 @@ void kmain(){
     pcb->pstat=2;
     exec_prg(pcb->entry_addr, pcb->stack_start);
     pcb->pstat=0;*/
+    uint8_t* buff=(uint8_t*)mem_alloc(64);
+    uint32_t f_addr[2];
+    uint32_t temp[4];
+    struct file_list_element* f=search_file("os_init.o");
+    f_addr[0]=mem_alloc(f->file_addr[0][1]);
+    read_file("os_init.o", (uint8_t*)f_addr[0]);
+    chg_dir("lib");
+    f=search_file("screen.o");
+    f_addr[1]=mem_alloc(f->file_addr[0][1]);
+    read_file("screen.o", (uint8_t*)f_addr[1]);
+    temp[0]=(uint32_t)f_addr;
+    uint32_t sysbuff[]={20, (uint32_t)temp};
+    set_syscall_buff(sysbuff);
+    self_intr(0x80);
+    struct Process_Control_Block* pcb=(struct Process_Control_Block*)temp[0];
+    pcb->pstat=2;
+    exec_prg(pcb->entry_addr, pcb->stack_start);
+    pcb->pstat=0;
     halt();
 }

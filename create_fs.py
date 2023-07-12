@@ -101,7 +101,8 @@ def calc_fat_size(path, s):
             calc_fat_size(new_path, s)
 
 sz=[0]
-calc_fat_size("./os",sz)
+folder="./os"
+calc_fat_size(folder,sz)
 if(sz[0]%512>0):
     sz[0]=sz[0]//512
     sz[0]=sz[0]*512+512
@@ -111,7 +112,7 @@ test_files=open("./kernel/fat.bin", "w")
 test_files.close()
 test_files=open("files.bin", "w")
 test_files.close()
-parse_fs("./test", [], sz)
+parse_fs(folder, [], sz)
 test_files=open("kernel/fat.bin", "+ab")
 test_files.write(b"!")
 test_files.close()

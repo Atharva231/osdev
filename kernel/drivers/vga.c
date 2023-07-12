@@ -1,6 +1,9 @@
 #define SCREEN_START 0xb8000
 #define SCREEN_END 0xb9000
 #define IDT_SIZE 256
+#define VID_BLUE 32
+#define VID_RED 40
+#define VID_GREEN 48
 #include<stdint.h>
 
 static uint32_t cursor;
@@ -77,6 +80,7 @@ void clear_screen(){
     set_cursor(0);
 }
 void set_pixel(uint16_t x, uint16_t y, uint8_t color) {
+    VGA=(uint8_t*)0xA0000;
   uint16_t offset;
   if(0 <= x && x < 320) {
     if(0 <= y && y < 200) {
@@ -86,6 +90,7 @@ void set_pixel(uint16_t x, uint16_t y, uint8_t color) {
   }
 }
 void set_VGA_Frame(uint8_t* src){
+    VGA=(uint8_t*)0xA0000;
     uint16_t src_ptr=0,offset;
     for(uint16_t x=0;x<320;x++){
         for(uint16_t y=0;y<200;y++,src_ptr++){

@@ -144,8 +144,6 @@ uint32_t find_symbol(uint32_t addr, uint8_t* symbol){
         switch(sym_entry->st_info&0xF){
         case 0x02:
             src=addr+strtab_sec->sh_offset+(uint8_t*)sym_entry->st_name;
-            print_text(src);
-            print_text(delim);
             c=0;
             for(uint8_t i=0;i<src[i]!=0;i++){
                 c+=1;
@@ -341,7 +339,7 @@ uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
         case 0x02:
             src=addr+strtab_sec->sh_offset+(uint8_t*)sym_entry->st_name;
             print_text(src);
-            print_text(delim);
+            print_text(" ");
             c=0;
             for(uint8_t i=0;i<src[i]!=0;i++){
                 c+=1;
@@ -364,7 +362,7 @@ uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
         reloc_addr=reloc;
     }
     c=0;
-    for(uint8_t i=0;i<(reloc_sec->sh_size)/(reloc_sec->sh_entsize);i++){
+    for(uint8_t i=0;i<(reloc_sec->sh_size)/8;i++){
        rel_entry=(Elf32_Rel*)(addr+reloc_sec->sh_offset+(i*8));
        sym_type=rel_entry->r_info&0xFF;
        sym_addr=(rel_entry->r_info>>8);
@@ -381,7 +379,7 @@ uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
        }
     }
     reloc_addr+=c;
-    for(uint8_t i=0;i<(reloc_sec->sh_size)/(reloc_sec->sh_entsize);i++){
+    for(uint8_t i=0;i<(reloc_sec->sh_size)/8;i++){
 	   rel_entry=(Elf32_Rel*)(addr+reloc_sec->sh_offset+(i*8));
        sym_type=rel_entry->r_info&0xFF;
        sym_addr=(rel_entry->r_info>>8);
