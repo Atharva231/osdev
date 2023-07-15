@@ -16,6 +16,7 @@ void syscall_init(){
     }
     buff_lock=false;
     pcb_list_head=0;
+    cmd=0;
 }
 void set_syscall_buff(uint32_t* buff){
     while(buff_lock);
@@ -27,7 +28,11 @@ struct Process_Control_Block* get_pcb_head(){
 }
 void system_call_task(){
     bool temp_bool=false,f;
-    if(cmd[0]==1){
+    if(cmd[0]==0){
+        print_text("syscall test ");
+        print_num_hex(cmd[1]);
+    }
+    else if(cmd[0]==1){
         while(syslock[0]);
         syslock[0]=true;
         uint32_t* scr_sysbuff=(uint32_t*)cmd[1];

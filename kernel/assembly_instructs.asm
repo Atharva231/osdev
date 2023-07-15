@@ -10,6 +10,7 @@ global system_call_handler
 global enable_interrupts
 global disable_interrupts
 global keyboard_handler
+global mouse_handler
 global cont_switch
 global page_fault_handler
 global pause_handler
@@ -36,6 +37,7 @@ global set_msr
 [extern print_num]
 [extern print_num_hex]
 [extern send_EOI]
+[extern mouse_task]
 port_byte_in:
 	mov edx, [esp + 4]
     xor eax, eax
@@ -150,6 +152,14 @@ cont_switch:
     push cs
     push eax
     call send_EOI
+    iretd
+
+mouse_handler:
+    pushad
+    cld
+    call mouse_task
+    call send_EOI
+    popad
     iretd
 
 system_call_handler:

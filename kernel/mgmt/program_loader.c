@@ -276,6 +276,7 @@ uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
     Elf32_Shdr* sec_entry=0;
     Elf32_Shdr* text_sec=0;
     Elf32_Shdr* data_sec=0;
+    Elf32_Shdr* rodata_sec=0;
     Elf32_Shdr* reloc_sec=0;
     Elf32_Shdr* symtab_sec=0;
     Elf32_Shdr* bss_sec=0;
@@ -293,7 +294,6 @@ uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
     uint8_t* src;
     uint8_t* dst;
     uint32_t* src_32;
-    uint8_t delim[]=",";
     sec_entry=(Elf32_Shdr*)(addr+elf_hdr->e_shoff+(elf_hdr->e_shstrndx*elf_hdr->e_shentsize));
     uint8_t* shstrtab=(uint8_t*)sec_entry->sh_offset+addr;
     for(uint8_t i=0;i<elf_hdr->e_shnum;i++){
@@ -310,8 +310,11 @@ uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
         case 'r':
             if(shstrtab[(uint32_t)sec_entry->sh_name+5]=='t' && shstrtab[(uint32_t)sec_entry->sh_name+2]=='e'){
                 reloc_sec=sec_entry;
-                ++c;
             }
+            else if(shstrtab[(uint32_t)sec_entry->sh_name+5]=='t' && shstrtab[(uint32_t)sec_entry->sh_name+2]=='o'){
+                rodata_sec=sec_entry;
+            }
+            ++c;
             break;
         case 's':
             if(shstrtab[(uint32_t)sec_entry->sh_name+2]=='y'){
@@ -330,7 +333,6 @@ uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
     }
     if(c==0||reloc_sec==0)
 	   return 2;
-
     uint32_t prg_entry_addr=3;
     bool f=true;
     for(uint8_t i=0;i<symtab_sec->sh_size/sizeof(Elf32_Sym);i++){
@@ -377,50 +379,55 @@ uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
        }
     }
     reloc_addr+=c;
+    uint8_t* sym_name;
     for(uint8_t i=0;i<(reloc_sec->sh_size)/8;i++){
-	   rel_entry=(Elf32_Rel*)(addr+reloc_sec->sh_offset+(i*8));
-       sym_type=rel_entry->r_info&0xFF;
-       sym_addr=(rel_entry->r_info>>8);
-       sym_entry=(Elf32_Sym*)(addr+symtab_sec->sh_offset+sym_addr*sizeof(Elf32_Sym));
-       src_32=(uint32_t*)(addr+text_sec->sh_offset+rel_entry->r_offset);
-       if(sym_type==0x01){
-        if(sym_entry->st_shndx==0xfff2){
-            temp=*src_32;
-            *src_32=(reloc+text_sec->sh_size+data_sec->sh_size+sym_entry->st_value)+temp;
-        }
-        else{
-            temp=*src_32;
-            *src_32=(addr+data_sec->sh_offset+sym_entry->st_value)+temp;
-        }
-       }
-       else if(sym_type==0x02){
-        if(sym_entry->st_shndx==0x0){
-            uint32_t flag,f1;
-            src=addr+strtab_sec->sh_offset+(uint8_t*)sym_entry->st_name;
-            for(uint8_t j=0;file_addr[j]!=0;j++){
-                flag=find_symbol(file_addr[j], src);
-                if(flag>3){
-                    elf_hdr=(Elf32_Ehdr*)file_addr[j];
-                    if(elf_hdr->e_type!=2){
-                        f1=load_link_elf(files, j, reloc_addr);
-                        print_num(f1);
-                        print_text(" ");
-                    }
-                    elf_hdr=(Elf32_Ehdr*)file_addr[file_num];
-                    *src_32=(flag-(addr+text_sec->sh_offset+rel_entry->r_offset+4));
-                    print_text(src);
-                    print_text(" ");
-                    break;
-                }
+        rel_entry=(Elf32_Rel*)(addr+reloc_sec->sh_offset+(i*8));
+        sym_type=rel_entry->r_info&0xFF;
+        sym_addr=(rel_entry->r_info>>8);
+        sym_entry=(Elf32_Sym*)(addr+symtab_sec->sh_offset+sym_addr*sizeof(Elf32_Sym));
+        src_32=(uint32_t*)(addr+text_sec->sh_offset+rel_entry->r_offset);
+        sym_name=(uint8_t*)(addr+strtab_sec->sh_offset+sym_entry->st_name);
+        /*print_num_hex(sym_entry->st_info&0xf);
+        print_text(sym_name);
+        print_text(" ");*/
+        if(sym_type==0x01){
+            if((sym_entry->st_info&0xf)==0x3){
+                *src_32+=(addr+rodata_sec->sh_offset);
+            }
+            else if(sym_entry->st_shndx==0xfff2){
+                temp=*src_32;
+                *src_32=(reloc+text_sec->sh_size+data_sec->sh_size+sym_entry->st_value)+temp;
+            }
+            else{
+                temp=*src_32;
+                *src_32=(addr+data_sec->sh_offset+sym_entry->st_value)+temp;
             }
         }
-        else
-            *src_32=(sym_entry->st_value-(rel_entry->r_offset+4));
-       }
-       /*print_num(sym_entry->st_value);
-       print_text(delim);*/
-    }
-    return prg_entry_addr;
+        else if(sym_type==0x02){
+            if(sym_entry->st_shndx==0x0){
+                uint32_t flag,f1;
+                src=addr+strtab_sec->sh_offset+(uint8_t*)sym_entry->st_name;
+                for(uint8_t j=0;file_addr[j]!=0;j++){
+                    flag=find_symbol(file_addr[j], src);
+                    if(flag>3){
+                        elf_hdr=(Elf32_Ehdr*)file_addr[j];
+                        if(elf_hdr->e_type!=2){
+                            f1=load_link_elf(files, j, reloc_addr);
+                        }
+                        elf_hdr=(Elf32_Ehdr*)file_addr[file_num];
+                        *src_32=(flag-(addr+text_sec->sh_offset+rel_entry->r_offset+4));
+                        break;
+                    }
+                }
+            }
+            else{
+                *src_32=(sym_entry->st_value-(rel_entry->r_offset+4));
+            }
+        }
+        /*print_num(sym_entry->st_value);
+        print_text(delim);*/
+        }
+        return prg_entry_addr;
 }
 
 uint32_t link_elf(uint32_t addr, uint32_t reloc_addr){

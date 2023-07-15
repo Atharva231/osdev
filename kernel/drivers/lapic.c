@@ -36,8 +36,8 @@
 #define DEST_SHORTHAND(data) ((data<<18) & 0xC0000)
 #define DEST_FIELD(data) ((data<<24) & 0xFF000000)
 
-uint32_t* lapic_addr=(uint32_t*)0xFEE00000;
-uint32_t timer_calib=0;
+uint32_t* lapic_addr;
+uint32_t timer_calib;
 uint32_t tsc_calib;
 bool lock_lapic=false;
 bool sleep_flag;
@@ -213,6 +213,9 @@ void send_EOI(){
 }
 
 void lapic_init(){
+    lapic_addr=(uint32_t*)0xFEE00000;
+    timer_calib=0;
+    tsc_calib=0;
     lock_lapic=false;
     uint32_t msr[2];
     get_msr(0x1B, msr);

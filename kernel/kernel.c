@@ -26,7 +26,8 @@ void set_call_id(char a){
 #include "./mgmt/heap.c"
 #include "./drivers/vga.c"
 #include "./drivers/pit_8254.c"
-#include "./drivers/keyboard.c"
+#include "./drivers/ps2_keyboard.c"
+#include "./drivers/ps2_mouse.c"
 #include "./drivers/ata_pio.c"
 #include "./drivers/pci.c"
 #include "./drivers/rtc.c"
@@ -56,7 +57,7 @@ void kmain(){
     clear_screen();
     idt_init();
     kb_init();
-    heap_init(0xC00000, 0xDFFFFF);
+    heap_init(0xC00000, 0xDFEFFF);
     atapio_init(true);
     disk_init(0x10000, 0x100000);
     vmm_init(0xFFFFF);
@@ -67,8 +68,9 @@ void kmain(){
     calib_lapic_timer();
     init_ap();
     struct pci_device_list* pci_temp = (struct pci_device_list*)pci_init();
-    filesystem_init(0xAC00);
+    //filesystem_init(0xAC00);
     syscall_init();
+    mouse_init();
     print_text("Atharva ");
     /*uint32_t f_addr[2];
     uint32_t temp[4];
@@ -86,8 +88,7 @@ void kmain(){
     pcb->pstat=2;
     exec_prg(pcb->entry_addr, pcb->stack_start);
     pcb->pstat=0;*/
-    uint8_t* buff=(uint8_t*)mem_alloc(64);
-    uint32_t f_addr[2];
+    /*uint32_t f_addr[2];
     uint32_t temp[4];
     struct file_list_element* f=search_file("os_init.o");
     f_addr[0]=mem_alloc(f->file_addr[0][1]);
@@ -100,9 +101,10 @@ void kmain(){
     uint32_t sysbuff[]={20, (uint32_t)temp};
     set_syscall_buff(sysbuff);
     self_intr(0x80);
+    *((uint32_t*)0xDFF000)=(uint32_t)set_syscall_buff;
     struct Process_Control_Block* pcb=(struct Process_Control_Block*)temp[0];
     pcb->pstat=2;
-    exec_prg(pcb->entry_addr, pcb->stack_start);
-    pcb->pstat=0;
+    //exec_prg(pcb->entry_addr, pcb->stack_start);
+    pcb->pstat=0;*/
     halt();
 }

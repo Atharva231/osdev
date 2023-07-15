@@ -8,8 +8,6 @@ extern void enable_interrupts();
 void unmask_io_interrupt(uint32_t offset);
 void mask_io_interrupt(uint32_t offset);
 
-uint32_t sleep_data[]={14551, 0, 0};
-
 void set_pit_count(uint32_t freq, uint32_t mode) {
 	if(freq<=18 || freq>1193182){
 		return;

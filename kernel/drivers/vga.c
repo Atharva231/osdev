@@ -7,7 +7,7 @@
 #include<stdint.h>
 
 static uint32_t cursor;
-static uint8_t* VGA = (unsigned char*) 0xA0000;
+static uint8_t* VGA;
 void set_cursor(uint32_t cursor1){
     cursor=cursor1;
 }

@@ -12,9 +12,10 @@
 #define INTERRUPT_MASK(data) ((data<<16) & 0x10000)
 #define DEST_FIELD(data) ((data<<24) & 0xFF000000)
 
-uint32_t* ioregsel=(uint32_t*)0xFEC00000;
-uint32_t* iowin=(uint32_t*)0xFEC00010;
+uint32_t* ioregsel;
+uint32_t* iowin;
 bool lock_ioapic=false;
+
 uint32_t get_ioapic_id(){
     *ioregsel=IOAPICID;
     return *iowin;
@@ -65,6 +66,8 @@ void set_ioapic_redtbl(uint32_t offset, uint32_t *data){
 }
 
 void ioapic_init(){
+    ioregsel=(uint32_t*)0xFEC00000;
+    iowin=(uint32_t*)0xFEC00010;
     lock_ioapic=false;
     /* set keyboard interrupt */
     uint32_t data[7];
@@ -76,6 +79,16 @@ void ioapic_init(){
     data[5]=0x00;
     data[6]=0x00;
     set_ioapic_redtbl(0x02, data);
+
+    /* set mouse interrupt */
+    data[0]=0x2C;
+    data[1]=0x00;
+    data[2]=0x00;
+    data[3]=0x01;
+    data[4]=0x00;
+    data[5]=0x00;
+    data[6]=0x00;
+    set_ioapic_redtbl(0x18, data);
 	
     /* set and mask 8254 timer interrupt */
     data[0]=0x39;
@@ -95,5 +108,5 @@ void ioapic_init(){
     data[4]=0x00;
     data[5]=0x01;
     data[6]=0x00;
-    set_ioapic_redtbl(0x08, data);
+    set_ioapic_redtbl(0x10, data);
 }
