@@ -48,12 +48,15 @@ void set_call_id(char a){
 
 extern uint32_t exec_prg(uint32_t addr, uint32_t base_ptr);
 extern void halt();
+uint32_t shared_mem_ptr;
 void prg(){
     uint8_t str[]="Hello ";
     print_text(str);
     halt();
 }
+
 void kmain(){
+    shared_mem_ptr=0xDFF000;
     clear_screen();
     idt_init();
     kb_init();
@@ -70,7 +73,10 @@ void kmain(){
     struct pci_device_list* pci_temp = (struct pci_device_list*)pci_init();
     //filesystem_init(0xAC00);
     syscall_init();
-    mouse_init();
+    *((uint32_t*)shared_mem_ptr)=(uint32_t)set_syscall_buff;
+    shared_mem_ptr+=4;
+    mouse_init((uint8_t*)shared_mem_ptr);
+    shared_mem_ptr+=(1*4);
     print_text("Atharva ");
     /*uint32_t f_addr[2];
     uint32_t temp[4];
@@ -101,7 +107,6 @@ void kmain(){
     uint32_t sysbuff[]={20, (uint32_t)temp};
     set_syscall_buff(sysbuff);
     self_intr(0x80);
-    *((uint32_t*)0xDFF000)=(uint32_t)set_syscall_buff;
     struct Process_Control_Block* pcb=(struct Process_Control_Block*)temp[0];
     pcb->pstat=2;
     //exec_prg(pcb->entry_addr, pcb->stack_start);

@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
-uint32_t* mouse_data_buff;
+uint8_t* mouse_data_buff;
 bool mouse_send_command(uint8_t mouse_cmd){
     while(port_byte_in(0x64)&2);
     port_byte_out(0x64, 0xD4);
@@ -29,7 +29,7 @@ void disable_mouse(){
     mask_io_interrupt(0x18);
 }
 
-void mouse_init(uint32_t* data_buff){
+void mouse_init(uint8_t* data_buff){
     mouse_data_buff=data_buff;
     port_byte_out(0xA1 , 0xFA);
     while(port_byte_in(0x64)&2);
