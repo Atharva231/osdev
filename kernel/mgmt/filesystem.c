@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include "file_list.c"
 
+#define FS_SIZE 0x200
 static uint32_t filesystem_addr;
 static struct dir_list_element* root;
 static struct dir_list_element* dir_temp;
@@ -49,7 +50,7 @@ uint32_t count_files_dirs(uint32_t* c, struct dir_list_element* dir_ptr){
     c[0]+=count_files(dir_ptr);
     c[1]+=count_dirs(dir_ptr);
 }
-void filesystem_init(uint32_t addr){
+/*void filesystem_init(uint32_t addr){
     addr/=0x200;
     filesystem_addr = addr;
     bool f_end = true;
@@ -244,6 +245,20 @@ void update_fat(){
     fs_temp[fs_temp_ptr]='!';
     write_sectors(filesystem_addr, fs_size/512, (uint16_t*)fs_temp);
     free_mem((uint32_t)fs_temp, fs_size);
+}
+*/
+
+void filesystem_init(uint32_t addr){
+    filesystem_addr=addr;
+    uint16_t* fs_loc=(uint16_t*)alloc_pages(FS_SIZE+(FSFMT_SIZE*8));
+    read_sectors(fs_loc, addr/0x200, (FS_SIZE+(FSFMT_SIZE*8))/0x200);
+    root = (struct dir_list_element*)fs_loc;
+    dir_temp=root;
+}
+
+void update_fat(){
+    uint16_t* fs_loc=(uint16_t*)root;
+    write_sectors(filesystem_addr/0x200, (FS_SIZE+(FSFMT_SIZE*8))/0x200, fs_loc);
 }
 
 struct dir_list_element* pwd(){

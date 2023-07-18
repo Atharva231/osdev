@@ -165,6 +165,7 @@ void page_fault_task(uint32_t error_code){
     print_text(" ");
     uint32_t page=read_cr2();
     print_num_hex(page);
+    print_text(" ");
     page=page>>12;
     page*=0x1000;
     if(ovf>0){

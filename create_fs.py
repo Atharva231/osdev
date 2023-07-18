@@ -38,9 +38,24 @@ def append_dir(f):
 def list_files(path):
     f1=[]
     for i in os.listdir(path):
-        if(i.endswith(".o")):
+        if(i.endswith(".o") or i.endswith(".bmp") or i.endswith(".txt")):
             f1.append(i)
     return f1
+
+def calc_file_dir_num(c, path):
+    d=[]
+    f=[]
+    try:
+        d=next(os.walk(path))[1]
+    except:
+        pass
+    f=list_files(path)
+    if(len(d)==0 and len(f)==0):
+        return
+    c[0]+=len(d)
+    c[1]+=len(f)
+    for i in d:
+        calc_file_dir_num(c, path+"/"+i)
 
 def parse_fs(path, prev_dirs, fat_sz):
     d=next(os.walk(path))[1]
@@ -58,7 +73,7 @@ def parse_fs(path, prev_dirs, fat_sz):
         delim='.'
         for i in d:
             if(d.index(i)==len(d)-1 and len(f)==0):
-                if(len(prev_dirs)>0):
+                if(len(prev_dirs)>1):
                     delim=';'
                 else:
                     delim='/'
@@ -67,8 +82,18 @@ def parse_fs(path, prev_dirs, fat_sz):
         delim=','
         for i in f:
             if(f.index(i)==len(f)-1):
-                if(len(prev_dirs)>0):
-                    delim=' '
+                if(len(prev_dirs)>1):
+                    new_path=path.split("/")
+                    for k in prev_dirs:
+                        if(k==path.split("/")[-1]):
+                            continue
+                        c=[0,0]
+                        new_path[-1]=k
+                        calc_file_dir_num(c, "/".join(new_path))
+                    if(c[1]>0):
+                        delim=' '
+                    else:
+                        delim='|'
                 else:
                     delim='|'
             fat_sz[1]=os.path.getsize(path+"/"+i)
@@ -101,7 +126,7 @@ def calc_fat_size(path, s):
             calc_fat_size(new_path, s)
 
 sz=[0]
-folder="./os"
+folder="./filesystem"
 calc_fat_size(folder,sz)
 if(sz[0]%512>0):
     sz[0]=sz[0]//512

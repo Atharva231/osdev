@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include "fs_heap.c"
 #define FILE_NAME_LEN 19
 #define DIR_NAME_LEN 15
 #define ENTRIES_PER_FILE 1

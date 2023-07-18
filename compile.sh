@@ -9,7 +9,7 @@ nasm ap_code.asm -o ap_code.bin
 nasm jumper_aid.asm -f elf32 -o jumper_aid.o
 gcc -fno-PIC -fno-stack-protector -m32 -s -c jumper.c
 
-cd ../../os
+cd ../../filesystem/os
 gcc -fno-PIC -fno-stack-protector -m32 -s -c os_init.c
 cd lib
 gcc -fno-PIC -fno-stack-protector -m32 -s -c *.c
