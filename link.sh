@@ -13,8 +13,7 @@ resize "./boot/jumper.bin"
 resize "./boot/ap_code.bin"
 cat ./boot/multi_core_boot.bin ./boot/ap_code.bin ./boot/jumper.bin ./kernel.bin > ../temp.bin
 cd ..
-python3 create_fs.py
-resize "kernel/fat.bin"
+python3 create_fs_v2.py
 cat temp.bin kernel/fat.bin files.bin > os.bin
 dd if=os.bin of=os.img
 truncate -s 2M os.img

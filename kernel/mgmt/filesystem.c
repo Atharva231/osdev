@@ -250,15 +250,26 @@ void update_fat(){
 
 void filesystem_init(uint32_t addr){
     filesystem_addr=addr;
-    uint16_t* fs_loc=(uint16_t*)alloc_pages(FS_SIZE+(FSFMT_SIZE*8));
-    read_sectors(fs_loc, addr/0x200, (FS_SIZE+(FSFMT_SIZE*8))/0x200);
+    uint16_t* fs_loc=(uint16_t*)alloc_pages(FS_SIZE);
+    read_sectors(fs_loc, addr/0x200, (FS_SIZE)/0x200);
+    if(*((uint8_t*)fs_loc)!='.'){
+        print_text("Filesystem Corrupted !! ");
+        while(1){
+            asm("hlt");
+        }
+    }
     root = (struct dir_list_element*)fs_loc;
     dir_temp=root;
+    read_sectors((uint16_t*)fsfmt, (addr+FS_SIZE)/0x200, (FSFMT_SIZE*8)/0x200);
+    uint16_t i;
+    for(i=0;fsfmt[i][0]!=0&&i<FSFMT_SIZE;i++){}
+    lowest_free_record_fsfmt=i;
 }
 
 void update_fat(){
     uint16_t* fs_loc=(uint16_t*)root;
-    write_sectors(filesystem_addr/0x200, (FS_SIZE+(FSFMT_SIZE*8))/0x200, fs_loc);
+    write_sectors(filesystem_addr/0x200, (FS_SIZE)/0x200, fs_loc);
+    write_sectors((filesystem_addr+FS_SIZE)/0x200, (FSFMT_SIZE*8)/0x200, (uint16_t*)fsfmt);
 }
 
 struct dir_list_element* pwd(){

@@ -2,23 +2,10 @@
 #define FSMAT_SIZE 512
 #include <stdint.h>
 
-uint32_t** fsfmt;
+uint32_t fsfmt[FSFMT_SIZE][2];
 //static uint32_t mat[MAT_SIZE][2];
 uint32_t lowest_free_record_fsfmt;
 //static uint32_t lowest_free_record_mat;
-uint32_t fs_heap_start_addr;
-
-void fs_heap_init(uint32_t heap_start, uint32_t limit, uint32_t**table){
-    fs_heap_start_addr=heap_start;
-    fsfmt=table;
-    for(uint16_t i=0;i<FSFMT_SIZE;i++){
-        fsfmt[i][0]=0;
-        fsfmt[i][1]=0;
-    }
-    fsfmt[0][0] = fs_heap_start_addr;
-    fsfmt[0][1] = limit;
-    lowest_free_record_fsfmt = 1;
-}
 
 uint32_t fs_mem_alloc(uint32_t mem_size){
     uint32_t mem_start=0;

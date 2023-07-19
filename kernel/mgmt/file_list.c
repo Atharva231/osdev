@@ -32,7 +32,7 @@ void refresh_name(uint8_t* src, bool flag){
 }
 
 struct file_list_element* create_file_list(uint8_t* name, uint8_t* addr){
-    struct file_list_element* head = (struct file_list_element*)mem_alloc(sizeof(struct file_list_element));
+    struct file_list_element* head = (struct file_list_element*)fs_mem_alloc(sizeof(struct file_list_element));
     if(head==0){
         return 0;
     }
@@ -46,7 +46,7 @@ struct file_list_element* create_file_list(uint8_t* name, uint8_t* addr){
     return head;
 }
 struct dir_list_element* create_dir_list(uint8_t* name){
-    struct dir_list_element* head = (struct dir_list_element*)mem_alloc(sizeof(struct dir_list_element));
+    struct dir_list_element* head = (struct dir_list_element*)fs_mem_alloc(sizeof(struct dir_list_element));
     if(head==0){
         return 0;
     }
@@ -63,7 +63,7 @@ struct dir_list_element* create_dir_list(uint8_t* name){
 uint8_t append_file_node(uint8_t* name, uint8_t* addr,struct file_list_element* head){
     if(head==0)
     return 0;
-    struct file_list_element* node = (struct file_list_element*)mem_alloc(sizeof(struct file_list_element));
+    struct file_list_element* node = (struct file_list_element*)fs_mem_alloc(sizeof(struct file_list_element));
     if(node==0){
         return 0;
     }
@@ -84,7 +84,7 @@ uint8_t append_file_node(uint8_t* name, uint8_t* addr,struct file_list_element* 
 uint8_t append_dir_node(uint8_t* name, struct dir_list_element* head){
     if(head==0)
     return 0;
-    struct dir_list_element* node = (struct dir_list_element*)mem_alloc(sizeof(struct dir_list_element));
+    struct dir_list_element* node = (struct dir_list_element*)fs_mem_alloc(sizeof(struct dir_list_element));
     if(node==0){
         return 0;
     }
@@ -108,7 +108,7 @@ struct file_list_element* remove_file_node(uint32_t node_num, struct file_list_e
     struct file_list_element* temp=head;
     if(node_num==0){
         head=head->next;
-        free_mem((uint32_t)temp, sizeof(struct file_list_element));
+        fs_free_mem((uint32_t)temp, sizeof(struct file_list_element));
         return head;
     }
     for(uint32_t i=1;i<node_num;i++){
@@ -119,7 +119,7 @@ struct file_list_element* remove_file_node(uint32_t node_num, struct file_list_e
     struct file_list_element* temp1 = temp->next;
     temp->delim=temp->next->delim;
     temp->next = temp->next->next;
-    free_mem((uint32_t)temp1, sizeof(struct file_list_element));
+    fs_free_mem((uint32_t)temp1, sizeof(struct file_list_element));
     return head;
 }
 struct dir_list_element* remove_dir_node(uint32_t node_num, struct dir_list_element* head){
@@ -128,7 +128,7 @@ struct dir_list_element* remove_dir_node(uint32_t node_num, struct dir_list_elem
     struct dir_list_element* temp=head;
     if(node_num==0){
         head=head->next;
-        free_mem((uint32_t)temp, sizeof(struct dir_list_element));
+        fs_free_mem((uint32_t)temp, sizeof(struct dir_list_element));
         return head;
     }
     for(uint32_t i=1;i<node_num;i++){
@@ -139,6 +139,6 @@ struct dir_list_element* remove_dir_node(uint32_t node_num, struct dir_list_elem
     struct dir_list_element* temp1 = temp->next;
     temp->delim=temp->next->delim;
     temp->next = temp->next->next;
-    free_mem((uint32_t)temp1, sizeof(struct dir_list_element));
+    fs_free_mem((uint32_t)temp1, sizeof(struct dir_list_element));
     return head;
 }
