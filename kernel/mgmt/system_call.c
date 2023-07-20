@@ -123,7 +123,7 @@ void system_call_task(){
         default:
             break;
         }
-        syslock[1];
+        syslock[1]=false;
     }
     else if(cmd[0]>=19 && cmd[0]<24){
         while(syslock[2]);
