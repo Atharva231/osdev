@@ -5,6 +5,16 @@
 
 uint32_t cursor;
 uint8_t* VGA;
+
+struct __attribute__ ((packed)) vesa_frame{
+    uint32_t frame_buff;
+    uint32_t image;
+    uint32_t img_width;
+    uint32_t img_height;
+    uint16_t pitch;
+    uint8_t bpp;
+};
+
 void set_cursor(uint32_t cursor1){
     cursor=cursor1;
 }
@@ -88,11 +98,11 @@ void set_pixel(uint16_t x, uint16_t y, uint8_t color) {
     }
   }
 }
-void set_VGA_Frame(uint8_t* src){
+void set_VGA_Frame(uint8_t* src, uint16_t width, uint32_t height){
     VGA=(uint8_t*)0xA0000;
     uint16_t src_ptr=0,offset;
-    for(uint16_t x=0;x<320;x++){
-        for(uint16_t y=0;y<200;y++,src_ptr++){
+    for(uint16_t x=0;x<width;x++){
+        for(uint16_t y=0;y<height;y++,src_ptr++){
             offset = 320*y + x;
             VGA[offset] = src[src_ptr];
         }
@@ -105,4 +115,16 @@ uint32_t del_char(){
     unsigned char *pointer = (unsigned char*)(SCREEN_START+cursor);
     *pointer=0;
     return cursor;
+}
+void set_vesa_frame(struct vesa_frame* data){
+    uint32_t src_ptr=0,offset;
+    uint8_t* vesa=(uint8_t*)data->frame_buff;
+    uint8_t* src=(uint8_t*)data->image;
+    for(uint32_t x=0;x<data->img_width;x++){
+        for(uint32_t y=0;y<data->img_height;y++,src_ptr++){
+            offset = data->pitch*y + x*(data->bpp/8);
+            for(uint8_t i=0;i<data->bpp/8;i++)
+                vesa[offset+i] = src[src_ptr+i];
+        }
+    }
 }

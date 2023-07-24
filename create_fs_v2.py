@@ -59,7 +59,7 @@ def append_item():
 def list_files(path):
     f1=[]
     for i in os.listdir(path):
-        if(i.endswith(".o") or i.endswith(".bmp") or i.endswith(".txt")):
+        if(i.endswith(".o") or i.endswith(".bmp") or i.endswith(".txt") or i.endswith(".ri")):
             f1.append(i)
     return f1
 

@@ -75,6 +75,8 @@ void kmain(){
     syscall_init();
     *((uint32_t*)shared_mem_ptr)=(uint32_t)set_syscall_buff;
     shared_mem_ptr+=4;
+    *((uint32_t*)shared_mem_ptr)=(uint32_t)self_intr;
+    shared_mem_ptr+=4;
     mouse_init((uint8_t*)shared_mem_ptr);
     shared_mem_ptr+=(1*4);
     print_text("Atharva ");

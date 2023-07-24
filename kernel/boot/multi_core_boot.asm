@@ -18,8 +18,47 @@ mov dl, [BOOT_DRIVE]
 mov dh, 0x03
 mov cl , 0x03
 call disk_load
+
+mov ax, 0x0A00
+mov es, ax
+mov di, 0x0000
+mov ax, 0x4F00
+int 0x10
+mov ax, [0xA00E]
+mov [vbe_mode], ax
+mov ax, [0xA010]
+mov [vbe_mode+2], ax
+
+find_vbe_mode:
+  mov di, [vbe_mode]
+  mov ax, [vbe_mode+2]
+  mov es, ax
+  mov cx, [es:di]
+  mov ax, 0x0A00
+  mov es, ax
+  mov di, 0x0200
+  mov ax, 0x4F01
+  int 0x10
+  mov ax, [0xA212]
+  mov bx, [0xA214]
+  mov cl, [0xA219]
+  mov ch, 0x00
+  add ax, bx
+  add ax, cx
+  mov cx, [vbe_mode]
+  add cx, 0x02
+  mov [vbe_mode], cx
+  cmp ax, 0x720
+  jne find_mode
+;mov ax, 0x0A00
+;mov es, ax
+;mov ax, 0x4F01
+;mov cx, 0x0118
+;mov di, 0x0000
+;int 0x10
+
 call switch_to_pm
-jmp $
+hlt
 
 %include "diskread.asm"
 %include "print_string.asm"
@@ -101,5 +140,6 @@ WAIT_10_ms          equ 10000d
 WAIT_200_us         equ 200d
 APIC_BASE           dd  0xFEE00000
 BOOT_DRIVE          db 0
+vbe_mode            dd 0
 times 510-($-$$) db 0
 dw 0xAA55

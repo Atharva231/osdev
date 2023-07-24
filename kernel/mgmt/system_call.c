@@ -1,4 +1,4 @@
-#define SYSLOCK_LEN 4
+#define SYSLOCK_LEN 5
 #define STACK_SIZE 0x10000
 #define FILE_NAME_LEN 19
 #define DIR_NAME_LEN 15
