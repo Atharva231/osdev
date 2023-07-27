@@ -80,34 +80,29 @@ void kmain(){
     mouse_init((uint8_t*)shared_mem_ptr);
     shared_mem_ptr+=(1*4);
     print_text("Atharva ");
-    /*uint32_t f_addr[2];
-    uint32_t temp[4];
-    struct file_list_element* f=search_file("prg.o");
-    f_addr[0]=mem_alloc(f->file_addr[0][1]);
-    read_file("prg.o", (uint8_t*)f_addr[0]);
-    f=search_file("prg_aid.o");
-    f_addr[1]=mem_alloc(f->file_addr[0][1]);
-    read_file("prg_aid.o", (uint8_t*)f_addr[1]);
-    temp[0]=(uint32_t)f_addr;
-    uint32_t sysbuff[]={20, (uint32_t)temp};
-    set_syscall_buff(sysbuff);
-    self_intr(0x80);
-    struct Process_Control_Block* pcb=(struct Process_Control_Block*)temp[0];
-    pcb->pstat=2;
-    exec_prg(pcb->entry_addr, pcb->stack_start);
-    pcb->pstat=0;*/
-    uint32_t f_addr[2];
+
+    uint32_t t;
+    uint32_t f_addr[4];
+    f_addr[4]=0;
     uint32_t temp[4];
     chg_dir("os");
+    
     struct file_list_element* f=search_file("os_init.o");
-    f_addr[0]=alloc_pages(8096);
+    f_addr[0]=alloc_pages(f->file_addr[0][1]);
     read_file("os_init.o", (uint8_t*)f_addr[0]);
-    print_num_hex(f->file_addr[0][1]);
+    t=f->file_addr[0][1];
     chg_dir("lib");
+    
     f=search_file("screen.o");
-    f_addr[1]=f_addr[0]+4096;
+    f_addr[1]=alloc_pages(f->file_addr[0][1]);
     read_file("screen.o", (uint8_t*)f_addr[1]);
-    print_num_hex(f->file_addr[0][1]);
+    t=f->file_addr[0][1];
+
+    f=search_file("bmp_parser.o");
+    f_addr[2]=alloc_pages(f->file_addr[0][1]);
+    read_file("bmp_parser.o", (uint8_t*)f_addr[2]);
+    t=f->file_addr[0][1];
+    
     temp[0]=(uint32_t)f_addr;
     uint32_t sysbuff[]={20, (uint32_t)temp};
     set_syscall_buff(sysbuff);

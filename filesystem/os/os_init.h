@@ -6,8 +6,11 @@
 #define ENTRIES_PER_FILE 1
 #define SHARED_MEM 0xDFF000
 #define SELF_INTR_FUNC 0xDFF004
+#define VBE_INFO_LOC 0xA200
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
+#include <math.h>
 struct __attribute__((__packed__)) Process_Control_Block{
 	uint32_t pid;
 	uint32_t pstat;
@@ -114,4 +117,6 @@ extern void set_vesa_frame(struct vesa_frame* data);
 extern void heap_init(uint32_t heap_start, uint32_t limit);
 extern uint32_t mem_alloc(uint32_t mem_size);
 extern uint32_t free_mem(uint32_t addr, uint32_t num_bytes);
+extern void syscall(uint16_t id, uint32_t* temp);
+extern void display_bitmap(uint8_t* file);
 #endif

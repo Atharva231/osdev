@@ -1,6 +1,7 @@
 #define SCREEN_START 0xb8000
 #define SCREEN_END 0xb9000
 #define IDT_SIZE 256
+#define VBE_INFO_LOC 0xA200
 #include <stdint.h>
 #include <stdbool.h>
 uint32_t cursor;
@@ -89,14 +90,7 @@ void clear_screen(){
     }
     cursor=0;
 }
-uint32_t del_char(){
-    if(cursor + SCREEN_START>0xb8000){
-        cursor-=2;
-    }
-    unsigned char *pointer = (unsigned char*)(SCREEN_START+cursor);
-    *pointer=0;
-    return cursor;
-}
+
 void set_vesa_frame(struct vesa_frame* data){
     uint32_t src_ptr,offset;
     bool f=false;
@@ -118,4 +112,13 @@ void set_vesa_frame(struct vesa_frame* data){
             src_ptr+=data->img_bpp/8;
         }
     }
+}
+
+uint32_t del_char(){
+    if(cursor + SCREEN_START>0xb8000){
+        cursor-=2;
+    }
+    unsigned char *pointer = (unsigned char*)(SCREEN_START+cursor);
+    *pointer=0;
+    return cursor;
 }

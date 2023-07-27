@@ -142,13 +142,10 @@ void system_call_task(){
             pm_sysbuff[0]=alloc_pages(STACK_SIZE);
             break;
         case 20:
-            print_text("load_link ");
             files=(uint32_t*)pm_sysbuff[0];
             pm_sysbuff[2]=get_heap_size(pm_sysbuff[0], 0);
             pm_sysbuff[1]=alloc_pages(pm_sysbuff[2]+STACK_SIZE);
             ad=load_link_elf(pm_sysbuff[0], 0, pm_sysbuff[1]);
-            print_num_hex(ad);
-            print_text(" ");
             pm_sysbuff[0]=(pm_sysbuff[1]+pm_sysbuff[2]+STACK_SIZE)-1;
             if(pcb_list_head==0){
                 pcb_list_head=create_pcb_list();

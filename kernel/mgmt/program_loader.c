@@ -424,8 +424,6 @@ uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
                 *src_32=(sym_entry->st_value-(rel_entry->r_offset+4));
             }
         }
-        /*print_num(sym_entry->st_value);
-        print_text(delim);*/
         }
         return prg_entry_addr;
 }
