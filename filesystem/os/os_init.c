@@ -14,6 +14,5 @@ void main(){
     temp[0]=(uint32_t)buff;
     syscall(11, temp);
     strcpy(buff, "img.bmp");
-    print_text(buff);
     display_bitmap(buff);
 }
