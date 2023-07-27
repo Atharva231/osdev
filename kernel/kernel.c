@@ -62,7 +62,7 @@ void kmain(){
     kb_init();
     heap_init(0xC00000, 0xDFEFFF);
     atapio_init(true);
-    disk_init(0x10000, 0x100000);
+    //disk_init(0x10000, 0x100000);
     vmm_init(0xFFFFF);
     set_prg_addr((uint32_t)resume_prg);
     lapic_init();
@@ -80,8 +80,6 @@ void kmain(){
     mouse_init((uint8_t*)shared_mem_ptr);
     shared_mem_ptr+=(1*4);
     print_text("Atharva ");
-    create_file("test.txt");
-    update_fat();
     /*uint32_t f_addr[2];
     uint32_t temp[4];
     struct file_list_element* f=search_file("prg.o");

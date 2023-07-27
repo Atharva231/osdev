@@ -100,7 +100,8 @@ struct __attribute__ ((packed)) vesa_frame{
     uint32_t img_width;
     uint32_t img_height;
     uint16_t pitch;
-    uint8_t bpp;
+    uint8_t img_bpp;
+	uint8_t screen_bpp;
 };
 
 extern void set_cursor(uint32_t cursor1);
@@ -108,11 +109,9 @@ extern uint32_t print_num_hex(uint32_t n);
 extern uint32_t print_num(uint32_t n);
 extern uint32_t print_text(uint8_t* str);
 extern void clear_screen();
-extern void set_pixel(uint16_t x, uint16_t y, uint8_t color);
-extern void set_VGA_Frame(uint8_t* src, uint16_t width, uint32_t height);
 extern uint32_t del_char();
+extern void set_vesa_frame(struct vesa_frame* data);
 extern void heap_init(uint32_t heap_start, uint32_t limit);
 extern uint32_t mem_alloc(uint32_t mem_size);
 extern uint32_t free_mem(uint32_t addr, uint32_t num_bytes);
-extern void set_vesa_frame(struct vesa_frame* data);
 #endif

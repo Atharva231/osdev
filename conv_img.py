@@ -1,0 +1,16 @@
+from PIL import Image
+from numpy import asarray
+f=open('filesystem/os/img.bmp','rb')
+img = Image.open('filesystem/os/img.bmp')
+numdata=asarray(img)
+out=open('filesystem/os/img.ri', 'wb')
+out.write(f.read(0x36))
+f.close()
+out.write(numdata.tobytes())
+out.seek(0x12)
+out.write(len(numdata).to_bytes(4, "little"))
+out.seek(0x16)
+out.write(len(numdata[0]).to_bytes(4, "little"))
+out.seek(0x1C)
+out.write((len(numdata[0][0])*8).to_bytes(4, "little"))
+out.close()

@@ -369,7 +369,20 @@ bool update_file(uint8_t* f_name, uint8_t* src_addr, uint32_t bytes){
         return false;
     }
     temp_file_addr[0][1]=sectors_len;
-    write_sectors(temp_file_addr[0][0], sectors_len, (uint16_t*) src_addr);
+    uint32_t c=0;
+    while(1){
+        if(sectors_len<0x100){
+            write_sectors(temp_file_addr[0][0], sectors_len, (uint16_t*)&src_addr[c]);
+            break;
+        }
+        else{
+            write_sectors(temp_file_addr[0][0], 0xFF, (uint16_t*)&src_addr[c]);
+            write_sectors(temp_file_addr[0][0]+0xFF, 0x1, (uint16_t*)&src_addr[c+0x1FE00]);
+        }
+        sectors_len-=0x100;
+        temp_file_addr[0][0]+=0x100;
+        c+=0x20000;
+    }
     for(uint8_t i=0;i<ENTRIES_PER_FILE;i++){
     	if(file->file_addr[i][0]!=0)
     	   free_sector(file->file_addr[i][0], file->file_addr[i][1]);
@@ -388,13 +401,22 @@ uint32_t file_size(uint8_t* f_name){
 void read_file(uint8_t* f_name, uint8_t* dst_addr){
     struct file_list_element* file = search_file(f_name);
     uint32_t c=0,lba, f_size;
-    for(uint8_t i=0;i<ENTRIES_PER_FILE;i++,c+=(file->file_addr[i][1]*200)){
+    for(uint8_t i=0;i<ENTRIES_PER_FILE;i++){
         lba=file->file_addr[i][0]/0x200;
-        if(file->file_addr[i][1]%0x200!=0)
-            f_size=(file->file_addr[i][1]/0x200)+1;
-        else
-            f_size=file->file_addr[i][1]/0x200;
-	   read_sectors((uint16_t*)&dst_addr[c], lba, f_size);
+        f_size=file->file_addr[i][1]/0x200;
+        while(1){
+            if(f_size<0x100){
+                read_sectors((uint16_t*)&dst_addr[c], lba, f_size);
+                break;
+            }
+            else{
+                read_sectors((uint16_t*)&dst_addr[c], lba, 0xFF);
+                read_sectors((uint16_t*)&dst_addr[c+0x1FE00], lba+0xFF, 0x1);
+            }
+            f_size-=0x100;
+            lba+=0x100;
+            c+=0x20000;
+        }
     }
 }
 struct dir_list_element* search_dir(uint8_t* dirName){

@@ -1,8 +1,8 @@
 #define SCREEN_START 0xb8000
 #define SCREEN_END 0xb9000
 #define IDT_SIZE 256
-#include<stdint.h>
-
+#include <stdint.h>
+#include <stdbool.h>
 uint32_t cursor;
 uint8_t* VGA;
 
@@ -12,7 +12,8 @@ struct __attribute__ ((packed)) vesa_frame{
     uint32_t img_width;
     uint32_t img_height;
     uint16_t pitch;
-    uint8_t bpp;
+    uint8_t img_bpp;
+	uint8_t screen_bpp;
 };
 
 void set_cursor(uint32_t cursor1){
@@ -88,26 +89,6 @@ void clear_screen(){
     }
     cursor=0;
 }
-void set_pixel(uint16_t x, uint16_t y, uint8_t color) {
-    VGA=(uint8_t*)0xA0000;
-  uint16_t offset;
-  if(0 <= x && x < 320) {
-    if(0 <= y && y < 200) {
-      offset = 320*y + x;
-      VGA[offset] = color;
-    }
-  }
-}
-void set_VGA_Frame(uint8_t* src, uint16_t width, uint32_t height){
-    VGA=(uint8_t*)0xA0000;
-    uint16_t src_ptr=0,offset;
-    for(uint16_t x=0;x<width;x++){
-        for(uint16_t y=0;y<height;y++,src_ptr++){
-            offset = 320*y + x;
-            VGA[offset] = src[src_ptr];
-        }
-    }
-}
 uint32_t del_char(){
     if(cursor + SCREEN_START>0xb8000){
         cursor-=2;
@@ -117,14 +98,24 @@ uint32_t del_char(){
     return cursor;
 }
 void set_vesa_frame(struct vesa_frame* data){
-    uint32_t src_ptr=0,offset;
+    uint32_t src_ptr,offset;
+    bool f=false;
+    if(data->screen_bpp > data->img_bpp){
+        f=true;
+    }
     uint8_t* vesa=(uint8_t*)data->frame_buff;
     uint8_t* src=(uint8_t*)data->image;
-    for(uint32_t x=0;x<data->img_width;x++){
-        for(uint32_t y=0;y<data->img_height;y++,src_ptr++){
-            offset = data->pitch*y + x*(data->bpp/8);
-            for(uint8_t i=0;i<data->bpp/8;i++)
-                vesa[offset+i] = src[src_ptr+i];
+    for(uint32_t y=0; y<data->img_height; y++){
+        src_ptr=(data->img_height-y-1)*data->img_width*(data->img_bpp/8);
+        for(uint32_t x=0; x<data->img_width; x++){
+            offset = data->pitch*y + x*(data->screen_bpp/8);
+            for(uint8_t i=0; i<data->img_bpp/8; i++){
+                vesa[offset+i]=src[src_ptr+i];
+            }
+            if(f){
+                vesa[offset + ((data->screen_bpp/8)-1)]=0xFF;
+            }
+            src_ptr+=data->img_bpp/8;
         }
     }
 }

@@ -49,13 +49,17 @@ find_vbe_mode:
   add cx, 0x02
   mov [vbe_mode], cx
   cmp ax, 0x720
-  jne find_mode
-;mov ax, 0x0A00
-;mov es, ax
-;mov ax, 0x4F01
-;mov cx, 0x0118
-;mov di, 0x0000
-;int 0x10
+  jne find_vbe_mode
+
+mov di, [vbe_mode]
+sub di, 0x02
+mov ax, [vbe_mode+2]
+mov es, ax
+mov bx, [es:di]
+mov ax, 0x4000
+or bx, ax
+mov ax, 0x4F02
+int 0x10
 
 call switch_to_pm
 hlt
