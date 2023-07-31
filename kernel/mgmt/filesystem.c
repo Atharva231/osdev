@@ -2,14 +2,14 @@
 #include <stdbool.h>
 #include "file_list.c"
 
-#define FS_SIZE 0x200
-static uint32_t filesystem_addr;
-static struct dir_list_element* root;
-static struct dir_list_element* dir_temp;
-static struct dir_list_element* sub_dir;
-static struct file_list_element* file_temp;
+uint32_t fs_size;
+uint32_t filesystem_addr;
+struct dir_list_element* root;
+struct dir_list_element* dir_temp;
+struct dir_list_element* sub_dir;
+struct file_list_element* file_temp;
 uint8_t fs_buff[512];
-static uint32_t temp_file_addr[ENTRIES_PER_FILE][2];
+uint32_t temp_file_addr[ENTRIES_PER_FILE][2];
 uint32_t count_pwd_dirs(){
     uint32_t c=0;
     for(sub_dir=dir_temp->dir_list;sub_dir!=0;sub_dir=sub_dir->next,c++){}
@@ -248,10 +248,11 @@ void update_fat(){
 }
 */
 
-void filesystem_init(uint32_t addr){
+void filesystem_init(uint32_t addr, uint32_t sz){
     filesystem_addr=addr;
-    uint16_t* fs_loc=(uint16_t*)alloc_pages(FS_SIZE);
-    read_sectors(fs_loc, addr/0x200, (FS_SIZE)/0x200);
+    fs_size=sz;
+    uint16_t* fs_loc=(uint16_t*)alloc_pages(fs_size);
+    read_sectors(fs_loc, addr/0x200, (fs_size)/0x200);
     if(*((uint8_t*)fs_loc)!='.'){
         print_text("Filesystem Corrupted !! ");
         while(1){
@@ -260,7 +261,7 @@ void filesystem_init(uint32_t addr){
     }
     root = (struct dir_list_element*)fs_loc;
     dir_temp=root;
-    read_sectors((uint16_t*)fsfmt, (addr+FS_SIZE)/0x200, (FSFMT_SIZE*8)/0x200);
+    read_sectors((uint16_t*)fsfmt, (addr+fs_size)/0x200, (FSFMT_SIZE*8)/0x200);
     uint16_t i;
     for(i=0;fsfmt[i][0]!=0&&i<FSFMT_SIZE;i++){}
     lowest_free_record_fsfmt=i;
@@ -268,8 +269,8 @@ void filesystem_init(uint32_t addr){
 
 void update_fat(){
     uint16_t* fs_loc=(uint16_t*)root;
-    write_sectors(filesystem_addr/0x200, (FS_SIZE)/0x200, fs_loc);
-    write_sectors((filesystem_addr+FS_SIZE)/0x200, (FSFMT_SIZE*8)/0x200, (uint16_t*)fsfmt);
+    write_sectors(filesystem_addr/0x200, (fs_size)/0x200, fs_loc);
+    write_sectors((filesystem_addr+fs_size)/0x200, (FSFMT_SIZE*8)/0x200, (uint16_t*)fsfmt);
 }
 
 struct dir_list_element* pwd(){

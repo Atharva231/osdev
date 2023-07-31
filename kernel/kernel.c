@@ -71,13 +71,13 @@ void kmain(){
     calib_lapic_timer();
     init_ap();
     struct pci_device_list* pci_temp = (struct pci_device_list*)pci_init();
-    filesystem_init(0xAE00);
+    filesystem_init(0xAE00, 0x200);
     syscall_init();
     *((uint32_t*)shared_mem_ptr)=(uint32_t)set_syscall_buff;
     shared_mem_ptr+=4;
     *((uint32_t*)shared_mem_ptr)=(uint32_t)self_intr;
     shared_mem_ptr+=4;
-    mouse_init((uint8_t*)shared_mem_ptr);
+    //mouse_init((uint8_t*)shared_mem_ptr);
     shared_mem_ptr+=(1*4);
     print_text("Atharva ");
 

@@ -13,6 +13,9 @@ void main(){
     strcpy(buff,"os");
     temp[0]=(uint32_t)buff;
     syscall(11, temp);
-    strcpy(buff, "img.bmp");
+    strcpy(buff,"ui");
+    temp[0]=(uint32_t)buff;
+    syscall(11, temp);
+    strcpy(buff, "char list.bmp");
     display_bitmap(buff);
 }
