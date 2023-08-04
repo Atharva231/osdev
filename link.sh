@@ -16,4 +16,4 @@ cd ..
 python3 create_fs_v2.py
 cat temp.bin kernel/fat.bin files.bin > os.bin
 dd if=os.bin of=os.img
-truncate -s 5M os.img
+truncate -s 8M os.img

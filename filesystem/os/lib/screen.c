@@ -91,7 +91,7 @@ void clear_screen(){
     cursor=0;
 }
 
-void set_vesa_frame(struct vesa_frame* data){
+void set_vesa_frame(struct vesa_frame* data, uint32_t x_offset, uint32_t y_offset){
     uint32_t src_ptr,offset;
     bool f=false;
     if(data->screen_bpp > data->img_bpp){
@@ -102,7 +102,7 @@ void set_vesa_frame(struct vesa_frame* data){
     for(uint32_t y=0; y<data->img_height; y++){
         src_ptr=(data->img_height-y-1)*data->img_width*(data->img_bpp/8);
         for(uint32_t x=0; x<data->img_width; x++){
-            offset = data->pitch*y + x*(data->screen_bpp/8);
+            offset = data->pitch*(y+y_offset) + (x_offset+x)*(data->screen_bpp/8);
             for(uint8_t i=0; i<data->img_bpp/8; i++){
                 vesa[offset+i]=src[src_ptr+i];
             }

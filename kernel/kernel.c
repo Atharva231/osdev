@@ -41,8 +41,8 @@ void set_call_id(char a){
 #include "./mgmt/process_mgmt.c"
 #include "./mgmt/program_loader.c"
 #include "./mgmt/pci_device_mgmt.c"
-#include "./mgmt/system_call.c"
 #include "./drivers/interrupts.c"
+#include "./mgmt/system_call.c"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -71,13 +71,13 @@ void kmain(){
     calib_lapic_timer();
     init_ap();
     struct pci_device_list* pci_temp = (struct pci_device_list*)pci_init();
-    filesystem_init(0xAE00, 0x200);
+    filesystem_init(0xB000, 0xE00);
     syscall_init();
     *((uint32_t*)shared_mem_ptr)=(uint32_t)set_syscall_buff;
     shared_mem_ptr+=4;
     *((uint32_t*)shared_mem_ptr)=(uint32_t)self_intr;
     shared_mem_ptr+=4;
-    //mouse_init((uint8_t*)shared_mem_ptr);
+    mouse_init((uint8_t*)shared_mem_ptr);
     shared_mem_ptr+=(1*4);
     print_text("Atharva ");
 

@@ -1,4 +1,4 @@
-#define SYSLOCK_LEN 5
+#define SYSLOCK_LEN 6
 #define STACK_SIZE 0x10000
 #define FILE_NAME_LEN 19
 #define DIR_NAME_LEN 15
@@ -26,6 +26,10 @@ void set_syscall_buff(uint32_t* buff){
 struct Process_Control_Block* get_pcb_head(){
     return pcb_list_head;
 }
+
+void set_interrupt(struct InterruptDescriptor32* intr, uint8_t offset);
+void get_idt_entry(struct InterruptDescriptor32* intr, uint8_t offset);
+
 void system_call_task(){
     bool temp_bool=false,f;
     if(cmd[0]==0){
@@ -282,5 +286,25 @@ void system_call_task(){
             break;
         }
         syslock[4]=false;
+    }
+    else if(cmd[0]>=28 && cmd[0]<30){
+        while(syslock[5]);
+        syslock[5]=true;
+        uint32_t* mem_sysbuff=(uint32_t*)cmd[1];
+        buff_lock=false;
+        switch (cmd[0])
+        {
+        case 28:
+            set_interrupt((struct InterruptDescriptor32*)mem_sysbuff[0], mem_sysbuff[1]);
+            break;
+        
+        case 29:
+            get_idt_entry((struct InterruptDescriptor32*)mem_sysbuff[0], mem_sysbuff[1]);
+            break;
+
+        default:
+            break;
+        }
+        syslock[5]=false;
     }
 }

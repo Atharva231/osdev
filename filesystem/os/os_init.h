@@ -107,16 +107,24 @@ struct __attribute__ ((packed)) vesa_frame{
 	uint8_t screen_bpp;
 };
 
+struct InterruptDescriptor32 {
+   	uint16_t offset_lowerbits;        // offset bits 0..15
+   	uint16_t selector;        // a code segment selector in GDT or LDT
+ 	uint8_t  zero;            // unused, set to 0
+   	uint8_t  type_attr; // gate type, dpl, and p fields
+   	uint16_t offset_higherbits;        // offset bits 16..31
+};
+
 extern void set_cursor(uint32_t cursor1);
 extern uint32_t print_num_hex(uint32_t n);
 extern uint32_t print_num(uint32_t n);
 extern uint32_t print_text(uint8_t* str);
 extern void clear_screen();
 extern uint32_t del_char();
-extern void set_vesa_frame(struct vesa_frame* data);
+extern void set_vesa_frame(struct vesa_frame* data, uint32_t x_offset, uint32_t y_offset);
 extern void heap_init(uint32_t heap_start, uint32_t limit);
 extern uint32_t mem_alloc(uint32_t mem_size);
 extern uint32_t free_mem(uint32_t addr, uint32_t num_bytes);
 extern void syscall(uint16_t id, uint32_t* temp);
-extern void display_bitmap(uint8_t* file);
+extern void display_bitmap(uint8_t* file, uint32_t x_offset, uint32_t y_offset);
 #endif
