@@ -423,9 +423,13 @@ uint32_t load_link_elf(uint32_t files, uint32_t file_num, uint32_t reloc){
             else{
                 *src_32=(sym_entry->st_value-(rel_entry->r_offset+4));
             }
+            /*print_num_hex((uint32_t)src_32);
+            print_text(" ");
+            print_text(src);
+            print_text(" ");*/
         }
-        }
-        return prg_entry_addr;
+    }
+    return prg_entry_addr;
 }
 
 uint32_t link_elf(uint32_t addr, uint32_t reloc_addr){

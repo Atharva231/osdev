@@ -82,12 +82,11 @@ void kmain(){
     print_text("Atharva ");
 
     uint32_t t;
-    uint32_t f_addr[4];
-    f_addr[4]=0;
+    uint32_t* f_addr;
     uint32_t temp[4];
     chg_dir("os");
     
-    struct file_list_element* f=search_file("os_init.o");
+    /*struct file_list_element* f=search_file("os_init.o");
     f_addr[0]=alloc_pages(f->file_addr[0][1]);
     read_file("os_init.o", (uint8_t*)f_addr[0]);
     t=f->file_addr[0][1];
@@ -101,8 +100,29 @@ void kmain(){
     f=search_file("bmp_parser.o");
     f_addr[2]=alloc_pages(f->file_addr[0][1]);
     read_file("bmp_parser.o", (uint8_t*)f_addr[2]);
+    t=f->file_addr[0][1];*/
+
+    struct file_list_element* f=search_file("os_init.o");
+    uint32_t strt=alloc_pages(f->file_addr[0][1]);
+    read_file(f->file_name, (uint8_t*)strt);
     t=f->file_addr[0][1];
-    
+    chg_dir("lib");
+    uint32_t num_files=count_pwd_files()+2;
+    f_addr=(uint32_t*)mem_alloc(num_files);
+    f_addr[0]=strt;
+    f_addr[num_files-1]=0;
+    f=pwd()->files_list;
+    uint32_t f1=1;
+    while (f>0)
+    {
+        print_text(f->file_name);
+        f_addr[f1]=alloc_pages(f->file_addr[0][1]);
+        read_file(f->file_name, (uint8_t*)f_addr[f1]);
+        t=f->file_addr[0][1];
+        f=f->next;
+        f1++;
+    }
+    free_mem((uint32_t)f_addr, num_files);
     temp[0]=(uint32_t)f_addr;
     uint32_t sysbuff[]={20, (uint32_t)temp};
     set_syscall_buff(sysbuff);
