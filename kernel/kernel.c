@@ -115,7 +115,6 @@ void kmain(){
     uint32_t f1=1;
     while (f>0)
     {
-        print_text(f->file_name);
         f_addr[f1]=alloc_pages(f->file_addr[0][1]);
         read_file(f->file_name, (uint8_t*)f_addr[f1]);
         t=f->file_addr[0][1];

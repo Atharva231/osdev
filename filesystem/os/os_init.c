@@ -16,6 +16,6 @@ void main(){
     strcpy(buff,"ui");
     temp[0]=(uint32_t)buff;
     syscall(11, temp);
-    strcpy(buff, "color palette.bmp");
+    strcpy(buff, "char7.bmp");
     display_bitmap(buff, 50, 50);
 }

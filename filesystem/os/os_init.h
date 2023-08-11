@@ -105,6 +105,8 @@ struct __attribute__ ((packed)) vesa_frame{
     uint16_t pitch;
     uint8_t img_bpp;
 	uint8_t screen_bpp;
+    uint32_t x_offset;
+    uint32_t y_offset;
 };
 
 struct InterruptDescriptor32 {
@@ -121,7 +123,6 @@ extern uint32_t print_num(uint32_t n);
 extern uint32_t print_text(uint8_t* str);
 extern void clear_screen();
 extern uint32_t del_char();
-extern void set_vesa_frame(struct vesa_frame* data, uint32_t x_offset, uint32_t y_offset);
 extern void heap_init(uint32_t heap_start, uint32_t limit);
 extern uint32_t mem_alloc(uint32_t mem_size);
 extern uint32_t free_mem(uint32_t addr, uint32_t num_bytes);

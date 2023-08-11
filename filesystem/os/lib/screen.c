@@ -15,6 +15,8 @@ struct __attribute__ ((packed)) vesa_frame{
     uint16_t pitch;
     uint8_t img_bpp;
 	uint8_t screen_bpp;
+    uint32_t x_offset;
+    uint32_t y_offset;
 };
 
 void set_cursor(uint32_t cursor1){
@@ -91,29 +93,6 @@ void clear_screen(){
     cursor=0;
 }
 
-void set_vesa_frame(struct vesa_frame* data, uint32_t x_offset, uint32_t y_offset){
-    uint32_t src_ptr,offset;
-    bool f=false;
-    if(data->screen_bpp > data->img_bpp){
-        f=true;
-    }
-    uint8_t* vesa=(uint8_t*)data->frame_buff;
-    uint8_t* src=(uint8_t*)data->image;
-    for(uint32_t y=0; y<data->img_height; y++){
-        src_ptr=(data->img_height-y-1)*data->img_width*(data->img_bpp/8);
-        for(uint32_t x=0; x<data->img_width; x++){
-            offset = data->pitch*(y+y_offset) + (x_offset+x)*(data->screen_bpp/8);
-            for(uint8_t i=0; i<data->img_bpp/8; i++){
-                vesa[offset+i]=src[src_ptr+i];
-            }
-            if(f){
-                vesa[offset + ((data->screen_bpp/8)-1)]=0xFF;
-            }
-            src_ptr+=data->img_bpp/8;
-        }
-    }
-}
-
 uint32_t del_char(){
     if(cursor + SCREEN_START>0xb8000){
         cursor-=2;
@@ -122,3 +101,4 @@ uint32_t del_char(){
     *pointer=0;
     return cursor;
 }
+
