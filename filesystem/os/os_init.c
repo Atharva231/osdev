@@ -9,7 +9,7 @@ void syscall(uint16_t id, uint32_t* temp){
 }
 void main(){
     clear_screen();
-    uint32_t temp[4];
+    int temp[5];
     strcpy(buff,"os");
     temp[0]=(uint32_t)buff;
     syscall(11, temp);
@@ -17,5 +17,17 @@ void main(){
     temp[0]=(uint32_t)buff;
     syscall(11, temp);
     strcpy(buff, "char7.bmp");
-    display_bitmap(buff, 50, 50);
+    temp[0]=(uint32_t)buff;
+    syscall(6, temp);
+    syscall(26, temp);
+    temp[1]=temp[0];
+    temp[0]=(uint32_t)buff;
+    syscall(3, temp);
+    struct bmp_head* bmp_file=(struct bmp_head*)temp[1];
+    temp[0]=50;
+    temp[1]=50;
+    temp[2]=15;
+    temp[3]=bmp_file->height-2;
+    temp[4]=0;
+    display_bitmap(bmp_file, temp);
 }

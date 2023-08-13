@@ -98,15 +98,18 @@ struct vbe_mode_info {
 
 
 struct __attribute__ ((packed)) vesa_frame{
+	uint8_t screen_bpp;
     uint32_t frame_buff;
+    uint16_t pitch;
+    uint32_t x_offset;
+    uint32_t y_offset;
     uint32_t image;
     uint32_t img_width;
     uint32_t img_height;
-    uint16_t pitch;
     uint8_t img_bpp;
-	uint8_t screen_bpp;
-    uint32_t x_offset;
-    uint32_t y_offset;
+	uint32_t resize_width;
+	uint32_t resize_height;
+	int scale;
 };
 
 struct InterruptDescriptor32 {
@@ -127,5 +130,7 @@ extern void heap_init(uint32_t heap_start, uint32_t limit);
 extern uint32_t mem_alloc(uint32_t mem_size);
 extern uint32_t free_mem(uint32_t addr, uint32_t num_bytes);
 extern void syscall(uint16_t id, uint32_t* temp);
-extern void display_bitmap(uint8_t* file, uint32_t x_offset, uint32_t y_offset);
+extern void display_bitmap(struct bmp_head* bmp_file, uint32_t* data);
+extern uint32_t calc_down_scale(uint32_t orig, uint32_t resize);
+extern uint32_t calc_up_scale(uint32_t orig, uint32_t resize);
 #endif

@@ -7,18 +7,6 @@
 uint32_t cursor;
 uint8_t* VGA;
 
-struct __attribute__ ((packed)) vesa_frame{
-    uint32_t frame_buff;
-    uint32_t image;
-    uint32_t img_width;
-    uint32_t img_height;
-    uint16_t pitch;
-    uint8_t img_bpp;
-	uint8_t screen_bpp;
-    uint32_t x_offset;
-    uint32_t y_offset;
-};
-
 void set_cursor(uint32_t cursor1){
     cursor=cursor1;
 }
