@@ -135,28 +135,65 @@ void set_bmp_frame(struct vesa_frame* data){
         }
     }
     else if(data->scale>0){
+        uint32_t t[screen_Bpp];
         x_scale=calc_up_scale(data->img_width, data->resize_width);
         y_scale=calc_up_scale(data->img_height, data->resize_height);
-        for(uint32_t y=0, y1=0; y<data->img_height; y++){
-            if(y%y_scale==0){
-                continue;
-            }
-            src_ptr=(data->img_height-y-1)*data->img_width*img_Bpp;
-            src_ptr+=((data->img_height-y-1)*pad);
-            for(uint32_t x=0, x1=0; x<data->img_width; x++){
-                if(x%x_scale>0){
+        uint32_t prev, next;
+        for(uint32_t y=0, y1=0; y<data->img_height; y++, y1++){
+            src_ptr=(data->img_height-y-1)*data->img_width*img_Bpp + ((data->img_height-y-1)*pad);
+            for(uint32_t x=0, x1=0; x<data->img_width; x++, x1++){
+                offset = data->pitch*(y1+data->y_offset) + (data->x_offset+x1)*screen_Bpp;
+                for(uint8_t i=0; i<img_Bpp; i++){
+                    vesa[offset+i]=src[src_ptr+i];
+                }
+                if(f){
+                    vesa[offset + (screen_Bpp-1)]=0x00;
+                }
+                if(x%x_scale==0 && x>0 && x<data->img_width-1){
+                    ++x1;
                     offset = data->pitch*(y1+data->y_offset) + (data->x_offset+x1)*screen_Bpp;
                     for(uint8_t i=0; i<img_Bpp; i++){
-                        vesa[offset+i]=src[src_ptr+i];
+                        vesa[offset+i]=(src[src_ptr+i] + src[src_ptr+img_Bpp+i])/2;
                     }
                     if(f){
                         vesa[offset + (screen_Bpp-1)]=0x00;
                     }
-                    x1++;
                 }
                 src_ptr+=img_Bpp;
             }
-            y1++;
+            if(y%y_scale==0 && y>0 && y<data->img_height){
+                ++y1;
+                prev=(data->img_height-y-1)*data->img_width*img_Bpp + ((data->img_height-y-1)*pad);
+                next=(data->img_height-y-2)*data->img_width*img_Bpp + ((data->img_height-y-2)*pad);
+                for(uint32_t x=0, x1=0; x<data->img_width; x++, x1++){
+                    offset = data->pitch*(y1+data->y_offset) + (data->x_offset+x1)*screen_Bpp;
+                    for(uint8_t i=0; i<img_Bpp; i++){
+                        vesa[offset+i]=(src[prev+i] + src[next+i])/2;
+                    }
+                    if(f){
+                        vesa[offset + (screen_Bpp-1)]=0x00;
+                    }
+                    if(x%x_scale==0 && x>0 && x<data->img_width-1){
+                        x1++;
+                        offset = data->pitch*(y1+data->y_offset) + (data->x_offset+x1)*screen_Bpp;
+                        for(uint8_t i=0; i<img_Bpp; i++){
+                            t[i]=(src[(next-img_Bpp)+i] + src[(next+img_Bpp)+i])/2;
+                        }
+                        if(f){
+                            t[(screen_Bpp-1)]=0x00;
+                        }
+                        for(uint8_t i=0; i<img_Bpp; i++){
+                            vesa[offset+i]=(src[prev+i] + t[i])/2;
+                        }
+                        if(f){
+                            vesa[offset + (screen_Bpp-1)]=0x00;
+                        }
+                    }
+                    prev+=img_Bpp;
+                    next+=img_Bpp;
+                }
+
+            }
         }
     }
     else if(data->scale<0){

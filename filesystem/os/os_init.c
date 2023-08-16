@@ -26,8 +26,12 @@ void main(){
     struct bmp_head* bmp_file=(struct bmp_head*)temp[1];
     temp[0]=50;
     temp[1]=50;
-    temp[2]=15;
-    temp[3]=bmp_file->height-2;
+    temp[2]=bmp_file->width*2;
+    temp[3]=bmp_file->height*2;
+    temp[4]=1;
+    display_bitmap(bmp_file, temp);
+    temp[0]=100;
+    temp[1]=50;
     temp[4]=0;
     display_bitmap(bmp_file, temp);
 }
