@@ -117,7 +117,7 @@ void kmain(){
     dir_up();
     struct Process_Control_Block* pcb=(struct Process_Control_Block*)temp[0];
     pcb->pstat=2;
-    //exec_prg(pcb->entry_addr, pcb->stack_start);
+    exec_prg(pcb->entry_addr, pcb->stack_start);
     pcb->pstat=0;
     halt();
 }

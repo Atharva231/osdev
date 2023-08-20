@@ -59,7 +59,7 @@ mov bx, [es:di]
 mov ax, 0x4000
 or bx, ax
 mov ax, 0x4F02
-;int 0x10
+int 0x10
 
 call switch_to_pm
 hlt

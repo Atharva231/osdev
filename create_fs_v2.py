@@ -4,8 +4,9 @@ dir_struct_size=32
 file_struct_size=32
 buff=[]
 buff_ptr=0
-next_dir=0
+next_dir=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 sz=[dir_struct_size]
+level=-1
 fsfmt_size=4*256*2
 folder="./filesystem"
 fs_start=0xE00000
@@ -68,6 +69,9 @@ def parse_fs(path, ptr, ind):
     global buff_ptr
     global next_dir
     global sz
+    global fs_start
+    global level
+    level+=1
     d=next(os.walk(path))[1]
     f=list_files(path)
     ptr2=buff_ptr
@@ -80,19 +84,19 @@ def parse_fs(path, ptr, ind):
             try:
                 buff[ptr+20+i]=t%0x100
             except IndexError:
-                print(f"Index Error!! {len(buff)} {next_dir} {buff_ptr}")
+                print(f"Index Error!! {len(buff)} {next_dir[level]} {buff_ptr}")
                 exit()
             t//=0x100
 
     elif(ind>0):
         for i in range(4):
             try:
-                buff[next_dir+28+i]=t%0x100
+                buff[next_dir[level]+28+i]=t%0x100
             except IndexError:
-                print(f"Index Error!! {len(buff)} {next_dir} {buff_ptr}")
+                print(f"Index Error!! {len(buff)} {next_dir[level]} {buff_ptr}")
                 exit()
             t//=0x100
-    next_dir=buff_ptr-dir_struct_size
+    next_dir[level]=buff_ptr-dir_struct_size
     
     if(len(f)>0):
         t=buff_ptr+fs_start
@@ -136,9 +140,9 @@ def parse_fs(path, ptr, ind):
         for i in range(s):
             temp.write(b'\0')
         temp.close()
-        
     for i in d:
         parse_fs(path+"/"+i, ptr2, d.index(i))
+    level-=1
 
 def calc_fat_size(path):
     global sz
