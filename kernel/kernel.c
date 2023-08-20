@@ -71,7 +71,7 @@ void kmain(){
     calib_lapic_timer();
     init_ap();
     struct pci_device_list* pci_temp = (struct pci_device_list*)pci_init();
-    filesystem_init(0xB000, 0xE00);
+    filesystem_init(0xB000, 0x1000);
     syscall_init();
     *((uint32_t*)shared_mem_ptr)=(uint32_t)set_syscall_buff;
     shared_mem_ptr+=4;
@@ -81,27 +81,13 @@ void kmain(){
     shared_mem_ptr+=(1*4);
     print_text("Atharva ");
 
+    uint8_t buff[64];
     uint32_t t;
     uint32_t* f_addr;
     uint32_t temp[4];
     chg_dir("os");
-    
-    /*struct file_list_element* f=search_file("os_init.o");
-    f_addr[0]=alloc_pages(f->file_addr[0][1]);
-    read_file("os_init.o", (uint8_t*)f_addr[0]);
-    t=f->file_addr[0][1];
-    chg_dir("lib");
-    
-    f=search_file("screen.o");
-    f_addr[1]=alloc_pages(f->file_addr[0][1]);
-    read_file("screen.o", (uint8_t*)f_addr[1]);
-    t=f->file_addr[0][1];
-
-    f=search_file("bmp_parser.o");
-    f_addr[2]=alloc_pages(f->file_addr[0][1]);
-    read_file("bmp_parser.o", (uint8_t*)f_addr[2]);
-    t=f->file_addr[0][1];*/
-
+    list_dirs(buff);
+    print_text(buff);
     struct file_list_element* f=search_file("os_init.o");
     uint32_t strt=alloc_pages(f->file_addr[0][1]);
     read_file(f->file_name, (uint8_t*)strt);
@@ -128,9 +114,10 @@ void kmain(){
     self_intr(0x80);
     dir_up();
     dir_up();
+    dir_up();
     struct Process_Control_Block* pcb=(struct Process_Control_Block*)temp[0];
     pcb->pstat=2;
-    exec_prg(pcb->entry_addr, pcb->stack_start);
+    //exec_prg(pcb->entry_addr, pcb->stack_start);
     pcb->pstat=0;
     halt();
 }

@@ -16,7 +16,10 @@ void main(){
     strcpy(buff,"ui");
     temp[0]=(uint32_t)buff;
     syscall(11, temp);
-    strcpy(buff, "char7.bmp");
+    strcpy(buff,"window");
+    temp[0]=(uint32_t)buff;
+    syscall(11, temp);
+    strcpy(buff, "exit_button1.bmp");
     temp[0]=(uint32_t)buff;
     syscall(6, temp);
     syscall(26, temp);
@@ -33,5 +36,11 @@ void main(){
     temp[0]=100;
     temp[1]=50;
     temp[4]=0;
+    display_bitmap(bmp_file, temp);
+    temp[0]=150;
+    temp[1]=50;
+    temp[2]=bmp_file->width/2;
+    temp[3]=bmp_file->height/2;
+    temp[4]=-1;
     display_bitmap(bmp_file, temp);
 }

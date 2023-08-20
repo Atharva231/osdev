@@ -63,7 +63,7 @@ def list_files(path):
             f1.append(i)
     return f1
 
-def parse_fs(path, ptr, ptr1, ind):
+def parse_fs(path, ptr, ind):
     global buff
     global buff_ptr
     global next_dir
@@ -71,11 +71,11 @@ def parse_fs(path, ptr, ptr1, ind):
     d=next(os.walk(path))[1]
     f=list_files(path)
     ptr2=buff_ptr
-    t=buff_ptr+ptr1
+    t=buff_ptr+fs_start
+    dir=path.split("/")[-1]
+    append_dir([".",dir, 0, 0, (ptr+fs_start), 0])
+    buff_ptr+=dir_struct_size
     if(ind==0):
-        dir=path.split("/")[-1]
-        append_dir([".",dir, 0, 0, (ptr+ptr1), 0])
-        buff_ptr+=dir_struct_size
         for i in range(4):
             try:
                 buff[ptr+20+i]=t%0x100
@@ -85,9 +85,6 @@ def parse_fs(path, ptr, ptr1, ind):
             t//=0x100
 
     elif(ind>0):
-        dir=path.split("/")[-1]
-        append_dir([".",dir, 0, 0, (ptr+ptr1), 0])
-        buff_ptr+=dir_struct_size
         for i in range(4):
             try:
                 buff[next_dir+28+i]=t%0x100
@@ -98,7 +95,7 @@ def parse_fs(path, ptr, ptr1, ind):
     next_dir=buff_ptr-dir_struct_size
     
     if(len(f)>0):
-        t=buff_ptr+ptr1
+        t=buff_ptr+fs_start
         for i in range(4):
             buff[(ptr2)+16+i]=t%0x100
             t//=0x100
@@ -119,7 +116,7 @@ def parse_fs(path, ptr, ptr1, ind):
             temp.write(b'\0')
         temp.close()
     for j in range(1, len(f)):
-        t=buff_ptr+ptr1
+        t=buff_ptr+fs_start
         for i in range(4):
             buff[(buff_ptr-file_struct_size)+28+i]=t%0x100
             t//=0x100
@@ -141,7 +138,7 @@ def parse_fs(path, ptr, ptr1, ind):
         temp.close()
         
     for i in d:
-        parse_fs(path+"/"+i, ptr2, ptr1, d.index(i))
+        parse_fs(path+"/"+i, ptr2, d.index(i))
 
 def calc_fat_size(path):
     global sz
@@ -163,7 +160,7 @@ test_files=open("./kernel/fat.bin", "w")
 test_files.close()
 test_files=open("files.bin", "w")
 test_files.close()
-parse_fs(folder, 0, fs_start, 0)
+parse_fs(folder, 0, 0)
 sz=[dir_struct_size]
 calc_fat_size(folder)
 t=sz[0]+fs_start
