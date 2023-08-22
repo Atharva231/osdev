@@ -223,7 +223,7 @@ void set_bmp_frame(struct vesa_frame* data){
     }
 }
 
-void display_bitmap(struct bmp_head* bmp_file, uint32_t* data){
+void display_bitmap(struct bmp_head* bmp_file, uint32_t* data, uint32_t framebuffer){
     struct vbe_mode_info* vbe_info=(struct vbe_mode_info*)VBE_INFO_LOC;
     struct vesa_frame frame;
     uint32_t bytes_per_pixel=bmp_file->bits_per_pixel/8;
@@ -232,7 +232,7 @@ void display_bitmap(struct bmp_head* bmp_file, uint32_t* data){
     frame.img_width=bmp_file->width;
     frame.img_height=bmp_file->height;
     frame.pitch=vbe_info->pitch;
-    frame.frame_buff=vbe_info->framebuffer;
+    frame.frame_buff=framebuffer;
     frame.screen_bpp=vbe_info->bpp;
     frame.x_offset=data[0];
     frame.y_offset=data[1];

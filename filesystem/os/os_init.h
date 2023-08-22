@@ -121,6 +121,9 @@ struct InterruptDescriptor32 {
 };
 
 extern void set_cursor(uint32_t cursor1);
+void scratchpad_init();
+uint32_t get_scratchpad();
+void set_vesa_frame();
 extern uint32_t print_num_hex(uint32_t n);
 extern uint32_t print_num(uint32_t n);
 extern uint32_t print_text(uint8_t* str);
@@ -130,7 +133,7 @@ extern void heap_init(uint32_t heap_start, uint32_t limit);
 extern uint32_t mem_alloc(uint32_t mem_size);
 extern uint32_t free_mem(uint32_t addr, uint32_t num_bytes);
 extern void syscall(uint16_t id, uint32_t* temp);
-extern void display_bitmap(struct bmp_head* bmp_file, uint32_t* data);
+extern void display_bitmap(struct bmp_head* bmp_file, uint32_t* data, uint32_t framebuffer);
 extern uint32_t calc_down_scale(uint32_t orig, uint32_t resize);
 extern uint32_t calc_up_scale(uint32_t orig, uint32_t resize);
 #endif
