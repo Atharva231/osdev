@@ -1,76 +1,4 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include <math.h>
-#define SELF_INTR_FUNC 0xDFF004
-#define VBE_INFO_LOC 0xA200
-struct vbe_mode_info {
-	uint16_t attributes;		// deprecated, only bit 7 should be of interest to you, and it indicates the mode supports a linear frame buffer.
-	uint8_t window_a;			// deprecated
-	uint8_t window_b;			// deprecated
-	uint16_t granularity;		// deprecated; used while calculating bank numbers
-	uint16_t window_size;
-	uint16_t segment_a;
-	uint16_t segment_b;
-	uint32_t win_func_ptr;		// deprecated; used to switch banks from protected mode without returning to real mode
-	uint16_t pitch;			// number of bytes per horizontal line
-	uint16_t width;			// width in pixels
-	uint16_t height;			// height in pixels
-	uint8_t w_char;			// unused...
-	uint8_t y_char;			// ...
-	uint8_t planes;
-	uint8_t bpp;			// bits per pixel in this mode
-	uint8_t banks;			// deprecated; total number of banks in this mode
-	uint8_t memory_model;
-	uint8_t bank_size;		// deprecated; size of a bank, almost always 64 KB but may be 16 KB...
-	uint8_t image_pages;
-	uint8_t reserved;
- 
-	uint8_t red_mask;
-	uint8_t red_position;
-	uint8_t green_mask;
-	uint8_t green_position;
-	uint8_t blue_mask;
-	uint8_t blue_position;
-	uint8_t reserved_mask;
-	uint8_t reserved_position;
-	uint8_t direct_color_attributes;
- 
-	uint32_t framebuffer;		// physical address of the linear frame buffer; write here to draw to the screen
-	uint32_t off_screen_mem_off;
-	uint16_t off_screen_mem_size;	// size of memory in the framebuffer but not being displayed on the screen
-	uint8_t reserved1[206];
-} __attribute__ ((packed));
-struct __attribute__ ((packed)) vesa_frame{
-	uint8_t screen_bpp;
-    uint32_t frame_buff;
-    uint16_t pitch;
-    uint32_t x_offset;
-    uint32_t y_offset;
-    uint32_t image;
-    uint32_t img_width;
-    uint32_t img_height;
-    uint8_t img_bpp;
-	uint32_t resize_width;
-	uint32_t resize_height;
-	int scale;
-};
-struct __attribute__((__packed__)) bmp_head{
-    uint8_t bmp_sig[2];
-    uint32_t file_size;
-    uint32_t reserved;
-    uint32_t data_offset;
-    uint32_t header_size;
-    uint32_t width;
-    uint32_t height;
-    uint16_t planes;
-    uint16_t bits_per_pixel;
-    uint32_t compression;
-    uint32_t image_size;
-    uint32_t horiz_res;
-    uint32_t vert_res;
-    uint32_t colors;
-    uint32_t imp_colors;
-};
+#include "bmp.h"
 uint32_t calc_down_scale(uint32_t orig, uint32_t resize){
     uint32_t n1=orig, n2=orig, c1=0, c2=0;
     uint32_t div=orig-resize;
@@ -108,6 +36,7 @@ uint32_t calc_up_scale(uint32_t orig, uint32_t resize){
     }
 }
 void set_bmp_frame(struct vesa_frame* data){
+    struct vbe_mode_info* vbe_info=(struct vbe_mode_info*)VBE_INFO_LOC;
     uint32_t src_ptr, offset, pad;
     uint32_t x_scale, y_scale;
     uint32_t img_Bpp=data->img_bpp/8, screen_Bpp=data->screen_bpp/8;
@@ -115,14 +44,19 @@ void set_bmp_frame(struct vesa_frame* data){
     uint8_t* src=(uint8_t*)data->image;
     bool f=false;
     pad=4-((data->img_width*img_Bpp)%4);
+    if(pad==4){
+        pad=0;
+    }
     if(screen_Bpp > img_Bpp){
         f=true;
     }
     if(data->scale==0){
-        for(uint32_t y=0; y<data->img_height; y++){
-            src_ptr=(data->img_height-y-1)*data->img_width*img_Bpp;
-            src_ptr+=((data->img_height-y-1)*pad);
-            for(uint32_t x=0; x<data->img_width; x++){
+        if(data->x_offset<0 || data->y_offset<0){
+            return;
+        }
+        for(uint32_t y=0; (y<data->img_height)&&((y+data->y_offset)<vbe_info->height); y++){
+            src_ptr=(data->img_height-y-1)*data->img_width*img_Bpp + ((data->img_height-y-1)*pad);
+            for(uint32_t x=0; (x<data->img_width)&&((x+data->x_offset)<vbe_info->width); x++){
                 offset = data->pitch*(y+data->y_offset) + (data->x_offset+x)*screen_Bpp;
                 for(uint8_t i=0; i<img_Bpp; i++){
                     vesa[offset+i]=src[src_ptr+i];

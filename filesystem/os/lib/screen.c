@@ -1,47 +1,4 @@
-#define SCREEN_START 0xb8000
-#define SCREEN_END 0xb9000
-#define IDT_SIZE 256
-#define VBE_INFO_LOC 0xA200
-#include <stdint.h>
-#include <stdbool.h>
-struct vbe_mode_info {
-	uint16_t attributes;		// deprecated, only bit 7 should be of interest to you, and it indicates the mode supports a linear frame buffer.
-	uint8_t window_a;			// deprecated
-	uint8_t window_b;			// deprecated
-	uint16_t granularity;		// deprecated; used while calculating bank numbers
-	uint16_t window_size;
-	uint16_t segment_a;
-	uint16_t segment_b;
-	uint32_t win_func_ptr;		// deprecated; used to switch banks from protected mode without returning to real mode
-	uint16_t pitch;			// number of bytes per horizontal line
-	uint16_t width;			// width in pixels
-	uint16_t height;			// height in pixels
-	uint8_t w_char;			// unused...
-	uint8_t y_char;			// ...
-	uint8_t planes;
-	uint8_t bpp;			// bits per pixel in this mode
-	uint8_t banks;			// deprecated; total number of banks in this mode
-	uint8_t memory_model;
-	uint8_t bank_size;		// deprecated; size of a bank, almost always 64 KB but may be 16 KB...
-	uint8_t image_pages;
-	uint8_t reserved;
- 
-	uint8_t red_mask;
-	uint8_t red_position;
-	uint8_t green_mask;
-	uint8_t green_position;
-	uint8_t blue_mask;
-	uint8_t blue_position;
-	uint8_t reserved_mask;
-	uint8_t reserved_position;
-	uint8_t direct_color_attributes;
- 
-	uint32_t framebuffer;		// physical address of the linear frame buffer; write here to draw to the screen
-	uint32_t off_screen_mem_off;
-	uint16_t off_screen_mem_size;	// size of memory in the framebuffer but not being displayed on the screen
-	uint8_t reserved1[206];
-} __attribute__ ((packed));
-
+#include "screen.h"
 uint32_t cursor;
 uint8_t* VGA;
 uint32_t scratchpad;
@@ -71,6 +28,15 @@ void set_vesa_frame(){
     uint8_t* dst=(uint8_t*)vbe_info->framebuffer;
     for(uint32_t i=0;i<vmem_size;i++){
         dst[i]=src[i];
+    }
+}
+
+void clear_scratchpad(){
+    struct vbe_mode_info* vbe_info=(struct vbe_mode_info*)VBE_INFO_LOC;
+    uint32_t vmem_size=vbe_info->width*vbe_info->height*(vbe_info->bpp/8);
+    uint8_t* dst=(uint8_t*)scratchpad;
+    for(uint32_t i=0;i<vmem_size;i++){
+        dst[i]=0x00;
     }
 }
 

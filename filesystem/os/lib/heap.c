@@ -1,7 +1,4 @@
-#define FMT_SIZE 256
-#define MAT_SIZE 512
-#include <stdint.h>
-
+#include "heap.h"
 static uint32_t fmt[FMT_SIZE][2];
 //static uint32_t mat[MAT_SIZE][2];
 static uint32_t lowest_free_record_fmt;
